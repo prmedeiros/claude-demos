@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cronograma de estudos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1F6; --surface:#FFFFFF; --ink:#14213D; --muted:#566074; --line:#D9DEE8; --on-accent:#FFFFFF; --track:#DDE3EE;
+  --a-seg:#B91C1C; --a-ter:#C2410C; --a-qua:#A16207; --a-qui:#15803D; --a-sex:#0E7490; --a-sab:#1D4ED8; --a-dom:#7E22CE;
+  --f-head:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1320; --surface:#171E30; --ink:#E8ECF4; --muted:#98A2B8; --line:#2A3350; --on-accent:#0E1320; --track:#26304A;
+    --a-seg:#F87171; --a-ter:#FB923C; --a-qua:#FACC15; --a-qui:#4ADE80; --a-sex:#22D3EE; --a-sab:#60A5FA; --a-dom:#C084FC;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1320; --surface:#171E30; --ink:#E8ECF4; --muted:#98A2B8; --line:#2A3350; --on-accent:#0E1320; --track:#26304A;
+  --a-seg:#F87171; --a-ter:#FB923C; --a-qua:#FACC15; --a-qui:#4ADE80; --a-sex:#22D3EE; --a-sab:#60A5FA; --a-dom:#C084FC;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*,*::before,*::after{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;}
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 48px;}
+h1,h2,h3{font-family:var(--f-head);margin:0;line-height:1.15;letter-spacing:-0.01em;}
+h1{font-size:clamp(1.6rem,4.6vw,2.15rem);}
+.sub{margin:6px 0 0;color:var(--muted);font-size:.95rem;}
+button{font:inherit;color:inherit;cursor:pointer;}
+:focus-visible{outline:3px solid var(--ink);outline-offset:2px;}
+
+/* Hoje */
+.today{margin-top:20px;background:var(--surface);border-radius:20px;padding:20px 20px 20px 26px;position:relative;overflow:hidden;
+  display:grid;grid-template-columns:1fr auto;gap:8px 16px;align-items:center;border:1px solid var(--line);}
+.today::before{content:"";position:absolute;inset:0 auto 0 0;width:10px;background:var(--accent,var(--ink));}
+.today .when{margin:0;color:var(--muted);font-size:.95rem;font-weight:500;grid-column:1/-1;}
+.today h2{font-size:clamp(1.5rem,5vw,2.1rem);color:var(--accent,var(--ink));}
+.today p.txt{margin:6px 0 0;max-width:62ch;white-space:pre-line;}
+.today .big{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:.85rem;color:var(--muted);font-weight:500;}
+.today .big .check{width:56px;height:56px;}
+.today .big input{width:40px;height:40px;border-radius:12px;}
+.today .big input:checked::after{width:9px;height:18px;}
+.today .empty{grid-column:1/-1;margin:0;font-size:1.05rem;}
+
+/* progresso geral */
+.overall{margin-top:16px;}
+.overall p{margin:0 0 8px;font-size:.95rem;}
+.overall b{font-weight:600;}
+.bar{height:10px;border-radius:99px;background:var(--track);overflow:hidden;}
+.bar i{display:block;height:100%;background:var(--ink);border-radius:99px;transition:width .35s ease;}
+
+/* controle de visão */
+.seg{margin:28px 0 14px;display:inline-flex;background:var(--track);border-radius:12px;padding:4px;gap:4px;}
+.seg button{border:0;background:transparent;padding:8px 16px;border-radius:9px;font-weight:600;font-size:.95rem;color:var(--muted);}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12);}
+
+/* faixa de semanas */
+.weeks{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 12px;margin:0 -2px;scrollbar-width:thin;}
+.wk{flex:0 0 auto;width:52px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 6px 7px;
+  display:flex;flex-direction:column;align-items:center;gap:6px;}
+.wk .n{font-family:var(--f-head);font-weight:700;font-size:1.1rem;line-height:1;}
+.wk .mb{width:100%;height:5px;border-radius:99px;background:var(--track);overflow:hidden;}
+.wk .mb i{display:block;height:100%;background:var(--ink);}
+.wk[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink);}
+.wk[aria-pressed="true"] .mb{background:rgba(127,127,127,.4);}
+.wk[aria-pressed="true"] .mb i{background:var(--bg);}
+.wk.now{box-shadow:0 3px 0 -1px var(--ink);}
+
+/* dias (visão por matéria) */
+.dtabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+.dt{border:2px solid var(--accent);background:transparent;color:var(--accent);padding:6px 12px;border-radius:99px;font-weight:600;font-size:.92rem;}
+.dt[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);}
+
+.head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;margin:14px 0 12px;}
+.head h2{font-size:1.4rem;}
+.head span{color:var(--muted);font-size:.95rem;}
+
+/* linhas */
+ul.list{list-style:none;margin:0;padding:0;display:grid;gap:10px;}
+.row{display:grid;grid-template-columns:92px 1fr 44px;gap:12px;align-items:center;padding:12px 8px 12px 14px;border-radius:14px;
+  border-left:8px solid var(--accent);background:color-mix(in srgb, var(--accent) 9%, var(--surface));}
+.row.is-today{box-shadow:0 0 0 2px var(--ink);}
+.when{display:flex;flex-direction:column;gap:2px;font-size:.88rem;color:var(--muted);}
+.when strong{color:var(--accent);font-size:1rem;font-weight:600;}
+.when em{font-style:normal;font-size:.75rem;font-weight:600;background:var(--ink);color:var(--bg);border-radius:99px;padding:1px 8px;align-self:flex-start;margin-top:2px;}
+.what .subj{display:block;font-weight:600;font-size:.92rem;color:var(--accent);margin-bottom:2px;}
+.what p{margin:0;white-space:pre-line;max-width:70ch;}
+.late{display:inline-block;margin-top:4px;font-size:.78rem;font-weight:600;color:#B91C1C;}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .late{color:#FCA5A5;}}
+:root[data-theme="dark"] .late{color:#FCA5A5;}
+.row.done .what p{opacity:.55;}
+.row.done .subj{opacity:.7;}
+
+.check{position:relative;display:grid;place-items:center;width:44px;height:44px;cursor:pointer;}
+.check input{appearance:none;-webkit-appearance:none;width:28px;height:28px;border:2px solid var(--accent,var(--ink));border-radius:8px;background:transparent;margin:0;cursor:pointer;display:grid;place-items:center;}
+.check input:checked{background:var(--accent,var(--ink));}
+.check input:checked::after{content:"";width:6px;height:13px;border:solid var(--on-accent);border-width:0 3px 3px 0;transform:rotate(45deg) translate(-1px,-1px);}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+
+/* rodapé */
+.foot{margin-top:32px;border-top:1px solid var(--line);padding-top:16px;}
+details summary{cursor:pointer;font-weight:600;}
+details ul{margin:10px 0 0;padding-left:20px;color:var(--muted);font-size:.93rem;display:grid;gap:6px;}
+.reset{margin-top:16px;border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:10px;font-size:.9rem;}
+
+@media (max-width:520px){
+  .row{grid-template-columns:76px 1fr 44px;gap:8px;padding-left:10px;}
+  .today{padding:18px 14px 18px 22px;}
+}
+@media (prefers-reduced-motion: reduce){ .bar i{transition:none;} }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <h1>Cronograma de estudos</h1>
+    <p class="sub">Guarda Municipal de São Gonçalo, de 05/10/2026 a 11/01/2027</p>
+  </header>
+
+  <section class="today" id="today" aria-live="polite"></section>
+
+  <section class="overall" id="overall"></section>
+
+  <div class="seg" role="group" aria-label="Modo de visualização">
+    <button type="button" data-view="sem" aria-pressed="true">Por semana</button>
+    <button type="button" data-view="mat" aria-pressed="false">Por matéria</button>
+  </div>
+
+  <div id="nav"></div>
+  <div id="view"></div>
+
+  <footer class="foot">
+    <details>
+      <summary>Observações</summary>
+      <ul>
+        <li>Terça a domingo têm 14 encontros e a segunda tem 15. Os últimos encontros de cada matéria são de revisão e simulado.</li>
+        <li>Lei Municipal 1.416/2022 e Lei Municipal 1.625/2026: a divisão em partes é uma estimativa. Ajuste pelos capítulos reais ao abrir o texto.</li>
+        <li>Feriados no período: 20/11, 25/12 e 01/01. Na semana de Natal e Ano-Novo, adie o conteúdo se precisar e use a revisão final como folga.</li>
+        <li>Rotina sugerida: 60% teoria e 40% questões. Comece cada dia revisando o tema do dia anterior por 10 a 15 minutos.</li>
+        <li>As marcações ficam salvas neste navegador.</li>
+      </ul>
+    </details>
+    <button type="button" class="reset" id="reset">Limpar marcações</button>
+  </footer>
+</main>
+
+<script>
+const DAYS = [{"wd": "Segunda", "cls": "seg", "name": "Direito Penal", "items": ["Aplicação da lei penal: lei penal no tempo e no espaço, tempo e lugar do crime, territorialidade e extraterritorialidade, conflito aparente de normas", "Fato típico, ilicitude e culpabilidade", "Consumação e tentativa, concurso de pessoas e concurso de crimes", "Crimes contra a pessoa", "Crimes contra o patrimônio", "Crimes contra a dignidade sexual e crimes contra a fé pública", "Crimes contra a Administração Pública", "Crimes contra a Administração da Justiça e crimes hediondos (Lei 8.072/1990)", "Abuso de Autoridade (Lei 13.869/2019) e Crime de Tortura (Lei 9.455/1997)", "Crimes do ECA (Lei 8.069/1990) e Lei Maria da Penha (Lei 11.340/2006)", "Estatuto do Desarmamento (Lei 10.826/2003) e Crimes Ambientais (Lei 9.605/1998)", "Lei de Drogas (Lei 11.343/2006)", "Lavagem de Dinheiro (Lei 9.613/1998) e disposições constitucionais aplicáveis ao Direito Penal", "Revisão geral: Parte Geral e crimes do Código Penal", "Revisão geral: leis especiais, pontos fracos e simulado"]}, {"wd": "Terça", "cls": "ter", "name": "Processo Penal", "items": ["CPP: disposições preliminares e princípios do processo penal", "Garantias constitucionais aplicáveis ao Direito Processual Penal", "Inquérito Policial: conceito, natureza e características", "Notícia do crime e formas de instauração do inquérito", "Investigação criminal: diligências, prazos, arquivamento e indiciamento", "Direitos e garantias do investigado", "Prisão: noções gerais, mandado, cumprimento e audiência de custódia", "Prisão em flagrante", "Prisão preventiva", "Prisão temporária, liberdade provisória e medidas cautelares", "Lei 9.099/1995 (Juizados Especiais Criminais): disposições gerais, competência e fase preliminar", "Lei 9.099/1995: procedimento sumaríssimo, transação penal e suspensão condicional do processo", "Revisão: inquérito, investigação e direitos do investigado", "Revisão: prisões e Juizados Especiais Criminais, com simulado"]}, {"wd": "Quarta", "cls": "qua", "name": "Legislação Específica", "items": ["SUSP (Lei 13.675/2018): disposições gerais, princípios, diretrizes e objetivos", "SUSP: PNSPDS, órgãos integrantes e competências", "SUSP: planos, conselhos, formação, controle e sistema de informações", "Estatuto Geral das Guardas Municipais (Lei 13.022/2014): princípios, competências e criação", "Estatuto Geral das Guardas Municipais: requisitos, capacitação, controle e disposições finais", "Estatuto dos Servidores de São Gonçalo (Lei Municipal 1.416/2022): primeira parte", "Estatuto dos Servidores: segunda parte", "Estatuto dos Servidores: terceira parte", "Estatuto dos Servidores: quarta parte", "Estatuto da Guarda Municipal de São Gonçalo (Lei Municipal 1.625/2026): primeira parte", "Estatuto da Guarda Municipal: segunda parte", "Estatuto da Guarda Municipal: terceira parte", "Revisão: SUSP e Estatuto Geral das Guardas Municipais", "Revisão: leis municipais, com simulado"]}, {"wd": "Quinta", "cls": "qui", "name": "Legislação Extravagante", "items": ["Crimes Hediondos (Lei 8.072/1990) e Lei de Tortura (Lei 9.455/1997)", "Abuso de Autoridade (Lei 13.869/2019)", "Crimes do ECA (Lei 8.069/1990)", "Estatuto do Desarmamento (Lei 10.826/2003)", "Crimes Ambientais (Lei 9.605/1998): crimes em espécie", "Crimes Ambientais: disposições gerais, infrações administrativas e procedimento", "Lei Maria da Penha (Lei 11.340/2006)", "Lei de Drogas (Lei 11.343/2006): prevenção, usuário e tráfico", "Lei de Drogas: procedimento penal e disposições finais", "Organizações Criminosas (Lei 12.850/2013)", "CTB (Lei 9.503/1997): disposições gerais, Sistema Nacional de Trânsito e normas de circulação", "CTB: habilitação, infrações e penalidades", "CTB: crimes de trânsito", "Revisão geral e simulado"]}, {"wd": "Sexta", "cls": "sex", "name": "Português", "items": ["Compreensão e interpretação de textos; tipos e gêneros textuais", "Reescrita de textos, níveis de formalidade, adequação da linguagem e do formato ao gênero", "Coesão textual: referenciação, substituição, repetição, conectores e sequenciação", "Ortografia oficial e emprego das letras", "Acentuação gráfica", "Emprego das classes de palavras", "Estrutura morfossintática do período; coordenação entre orações e entre termos", "Subordinação entre orações e entre termos", "Sinais de pontuação", "Concordância verbal e nominal", "Crase", "Colocação dos pronomes átonos; tempos e modos verbais", "Correspondência oficial (Manual de Redação da Presidência da República)", "Revisão geral e simulado de interpretação"]}, {"wd": "Sábado", "cls": "sab", "name": "Informática", "items": ["Conceitos de informática, hardware e software", "Sistema operacional Windows (XP a 10)", "Linux e software livre", "Processador de texto: Word e LibreOffice Writer", "Planilhas eletrônicas (Excel e Calc): conceitos, fórmulas e referências", "Planilhas: funções e gráficos", "Editor de apresentações (PowerPoint e Impress); tecnologias multimídia, áudio, vídeo e formatos de arquivo", "Redes de computadores: conceitos, equipamentos, topologias, conectores e cabeamento", "Redes: transmissão de sinal, protocolos e redes sem fio", "Internet e Intranet, web 2.0 e 3.0, navegadores (Explorer, Chrome e Firefox) e ferramentas de busca", "Colaboração: correio eletrônico, webmail, grupos de discussão, fóruns, wikis e redes sociais", "Segurança da informação: conceitos, ameaças, vulnerabilidades, vírus e antivírus", "Segurança: backup, criptografia e assinatura digital", "Revisão geral e simulado"]}, {"wd": "Domingo", "cls": "dom", "name": "Constitucional e Administrativo", "items": ["Constitucional: Arts. 1º a 4º\nAdministrativo: Atos administrativos: conceito, elementos, atributos, classificação e espécies", "Constitucional: Art. 5º, primeira parte\nAdministrativo: Atos: formação, efeitos, extinção, anulação e revogação", "Constitucional: Art. 5º, segunda parte\nAdministrativo: Poderes hierárquico, disciplinar e regulamentar; uso e abuso de poder", "Constitucional: Arts. 6º a 16 (direitos sociais, nacionalidade e direitos políticos)\nAdministrativo: Poder de polícia", "Constitucional: Arts. 18 a 24 (organização político-administrativa e União)\nAdministrativo: Responsabilidade civil do Estado; responsabilidade civil, administrativa e penal dos agentes", "Constitucional: Arts. 25 a 31 (Estados e Municípios)\nAdministrativo: Agentes e servidores públicos; regime jurídico, direitos, deveres e responsabilidades", "Constitucional: Arts. 37 a 41 e art. 77 da Constituição do RJ\nAdministrativo: Concurso, provimento, acessibilidade, estabilidade, remuneração e acumulação", "Constitucional: Poder Legislativo (arts. 44 a 75)\nAdministrativo: Processo Administrativo Disciplinar", "Constitucional: Poder Executivo (arts. 76 a 91)\nAdministrativo: Improbidade Administrativa (Lei 8.429/1992)", "Constitucional: Poder Judiciário e funções essenciais à Justiça (arts. 92 a 135)\nAdministrativo: Revisão: atos administrativos e poderes", "Constitucional: Segurança Pública (art. 144)\nAdministrativo: Revisão: agentes públicos e servidores", "Constitucional: Revisão: arts. 1º a 41\nAdministrativo: Revisão: PAD e improbidade", "Constitucional: Simulado de Constitucional\nAdministrativo: Revisão dos erros", "Constitucional: Revisão dos erros\nAdministrativo: Simulado de Administrativo"]}];
+const STORE = "cronograma-estudos-v1";
+const MONTH0 = 9, YEAR0 = 2026, DAY0 = 5;
+const START = new Date(YEAR0, MONTH0, DAY0);
+const END = new Date(2027, 0, 11);
+const WD_LONG = ["segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado","domingo"];
+
+let state = {};
+try { state = JSON.parse(localStorage.getItem(STORE) || "{}") || {}; } catch (e) { state = {}; }
+function save(){ try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }
+
+const pad = n => String(n).padStart(2,"0");
+const fmt = d => pad(d.getDate()) + "/" + pad(d.getMonth()+1);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+const SESS = [];
+DAYS.forEach((day,d) => day.items.forEach((text,i) => {
+  const k = i + 1;
+  SESS.push({ d, k, wd: day.wd, cls: day.cls, subj: day.name, text,
+    date: new Date(YEAR0, MONTH0, DAY0 + 7*(k-1) + d), key: d + "-" + k });
+}));
+
+const now = new Date();
+const TODAY = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+const sameDay = (a,b) => a.getTime() === b.getTime();
+const daysFromStart = Math.round((TODAY - START) / 864e5);
+
+let view = "sem";
+let week = Math.min(15, Math.max(1, Math.floor(daysFromStart/7) + 1));
+let dayIdx = Math.min(6, Math.max(0, (TODAY.getDay() + 6) % 7));
+let focusKey = null;
+
+const weekSessions = k => SESS.filter(s => s.k === k);
+const doneCount = list => list.filter(s => state[s.key]).length;
+
+function rowHTML(s, mode){
+  const done = !!state[s.key];
+  const late = !done && s.date < TODAY;
+  const isToday = sameDay(s.date, TODAY);
+  const when = mode === "sem"
+    ? `<strong>${s.wd}</strong><span>${fmt(s.date)}</span>`
+    : `<strong>Semana ${s.k}</strong><span>${fmt(s.date)}</span>`;
+  return `<li class="row${done ? " done" : ""}${isToday ? " is-today" : ""}" style="--accent:var(--a-${s.cls})">
+    <div class="when">${when}${isToday ? "<em>hoje</em>" : ""}</div>
+    <div class="what">${mode === "sem" ? `<span class="subj">${esc(s.subj)}</span>` : ""}<p>${esc(s.text)}</p>${late ? '<span class="late">pendente</span>' : ""}</div>
+    <label class="check"><input type="checkbox" data-key="${s.key}"${done ? " checked" : ""}><span class="sr">Estudado: ${esc(s.subj)}, ${fmt(s.date)}</span></label>
+  </li>`;
+}
+
+function renderToday(){
+  const el = document.getElementById("today");
+  const s = SESS.find(x => sameDay(x.date, TODAY));
+  if (s){
+    const done = !!state[s.key];
+    el.style.setProperty("--accent", `var(--a-${s.cls})`);
+    el.innerHTML = `<p class="when">Hoje, ${WD_LONG[s.d]}, ${fmt(s.date)}</p>
+      <div><h2>${esc(s.subj)}</h2><p class="txt">${esc(s.text)}</p></div>
+      <div class="big"><label class="check"><input type="checkbox" data-key="${s.key}"${done ? " checked" : ""}><span class="sr">Marcar como estudado</span></label><span>${done ? "Estudado" : "Marcar"}</span></div>`;
+  } else {
+    el.style.removeProperty("--accent");
+    const msg = TODAY < START ? "O cronograma começa em 05/10/2026." : (TODAY > END ? "Cronograma concluído. Bons resultados na prova!" : "Sem encontro previsto para hoje.");
+    el.innerHTML = `<p class="empty">${msg}</p>`;
+  }
+}
+
+function renderOverall(){
+  const total = SESS.length, done = doneCount(SESS);
+  const pct = Math.round(done/total*100);
+  const left = Math.round((END - TODAY)/864e5);
+  const tail = left > 0 ? `Faltam ${left} ${left === 1 ? "dia" : "dias"} para 11/01.` : (left === 0 ? "Hoje é o último dia." : "");
+  document.getElementById("overall").innerHTML =
+    `<p><b>${done} de ${total}</b> encontros estudados (${pct}%). ${tail}</p>
+     <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>`;
+}
+
+function renderNav(){
+  const nav = document.getElementById("nav");
+  if (view === "sem"){
+    let h = '<div class="weeks" role="group" aria-label="Semanas">';
+    for (let k = 1; k <= 15; k++){
+      const ws = weekSessions(k), p = Math.round(doneCount(ws)/ws.length*100);
+      const isNow = daysFromStart >= 7*(k-1) && daysFromStart < 7*k;
+      h += `<button type="button" class="wk${isNow ? " now" : ""}" data-week="${k}" aria-pressed="${k === week}" aria-label="Semana ${k}, ${p}% estudada"><span class="n">${k}</span><span class="mb"><i style="width:${p}%"></i></span></button>`;
+    }
+    nav.innerHTML = h + "</div>";
+  } else {
+    nav.innerHTML = '<div class="dtabs" role="group" aria-label="Dias da semana">' +
+      DAYS.map((x,i) => `<button type="button" class="dt" style="--accent:var(--a-${x.cls})" data-day="${i}" aria-pressed="${i === dayIdx}">${x.wd}</button>`).join("") + "</div>";
+  }
+}
+
+function renderView(){
+  const el = document.getElementById("view");
+  if (view === "sem"){
+    const ws = weekSessions(week);
+    const first = ws[0].date, last = ws[ws.length-1].date;
+    const period = ws.length === 1 ? fmt(first) : `${fmt(first)} a ${fmt(last)}`;
+    el.innerHTML = `<div class="head"><h2>Semana ${week}</h2><span>${period}</span><span>${doneCount(ws)} de ${ws.length} estudados</span></div>
+      <ul class="list">${ws.map(s => rowHTML(s, "sem")).join("")}</ul>`;
+  } else {
+    const day = DAYS[dayIdx];
+    const ds = SESS.filter(s => s.d === dayIdx);
+    el.innerHTML = `<div class="head" style="--accent:var(--a-${day.cls})"><h2 style="color:var(--accent)">${esc(day.name)}</h2><span>${day.wd}, ${ds.length} encontros</span><span>${doneCount(ds)} de ${ds.length} estudados</span></div>
+      <ul class="list">${ds.map(s => rowHTML(s, "mat")).join("")}</ul>`;
+  }
+}
+
+function render(){
+  renderToday(); renderOverall(); renderNav(); renderView();
+  document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.view === view)));
+  if (focusKey){
+    const t = document.querySelector(`#view input[data-key="${focusKey}"]`) || document.querySelector(`input[data-key="${focusKey}"]`);
+    if (t) t.focus();
+    focusKey = null;
+  }
+}
+
+document.addEventListener("change", e => {
+  const t = e.target;
+  if (t.matches && t.matches("input[data-key]")){
+    if (t.checked) state[t.dataset.key] = true; else delete state[t.dataset.key];
+    save(); focusKey = t.dataset.key; render();
+  }
+});
+document.addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.dataset.view){ view = b.dataset.view; render(); }
+  else if (b.dataset.week){ week = +b.dataset.week; render(); }
+  else if (b.dataset.day){ dayIdx = +b.dataset.day; render(); }
+});
+
+let armed = false;
+const resetBtn = document.getElementById("reset");
+resetBtn.addEventListener("click", () => {
+  if (!armed){
+    armed = true; resetBtn.textContent = "Toque de novo para limpar tudo";
+    setTimeout(() => { armed = false; resetBtn.textContent = "Limpar marcações"; }, 4000);
+  } else {
+    state = {}; save(); armed = false; resetBtn.textContent = "Limpar marcações"; render();
+  }
+});
+
+render();
+</script>
+</body>
+</html>

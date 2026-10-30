@@ -1,0 +1,583 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Jornada da Aprovação</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: uma tela de RPG em coluna única. HUD do personagem no topo, navegação de dia, missão principal, missões diárias, tentações (vícios), atributos, mapa de semanas e chefões. */
+:root{
+  --bg:#110F22; --win:#1B1833; --win2:#2A2450; --ink:#F2EEDC; --muted:#AAA4CC; --line:#6A5DC0; --shadow:#06050F;
+  --gold:#F5B942; --on-gold:#2A1D00; --hp:#F0525C; --ok:#46D9A2;
+  --mente:#62AEFF; --espirito:#C8A2FF; --corpo:#FF915E; --oficio:#46D9A2;
+  --f-pix:"Pixelify Sans","Courier New",ui-monospace,monospace;
+  --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#E7E0CB; --win:#FBF7E8; --win2:#EDE5CB; --ink:#241E40; --muted:#625A8A; --line:#4E43A0; --shadow:#C3B995;
+    --gold:#E0A021; --on-gold:#2A1D00; --hp:#C92D39; --ok:#0A7A55;
+    --mente:#1F6FD1; --espirito:#7B3FD1; --corpo:#B8420F; --oficio:#0A7A55;
+    color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#E7E0CB; --win:#FBF7E8; --win2:#EDE5CB; --ink:#241E40; --muted:#625A8A; --line:#4E43A0; --shadow:#C3B995;
+  --gold:#E0A021; --on-gold:#2A1D00; --hp:#C92D39; --ok:#0A7A55;
+  --mente:#1F6FD1; --espirito:#7B3FD1; --corpo:#B8420F; --oficio:#0A7A55;
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box;}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;padding-inline:16px;padding-block:20px 90px;}
+.app{max-width:720px;margin:0 auto;display:grid;gap:18px;}
+button,input,select{font:inherit;color:inherit;}
+button{cursor:pointer;}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
+.pix{font-family:var(--f-pix);letter-spacing:.03em;}
+h1,h2,h3{font-family:var(--f-pix);margin:0;font-weight:700;letter-spacing:.04em;text-wrap:balance;}
+h1{font-size:1.5rem;}
+h2{font-size:1.05rem;text-transform:uppercase;color:var(--gold);}
+.win{background:var(--win);border:3px solid var(--line);box-shadow:inset 0 0 0 2px var(--win2),5px 5px 0 var(--shadow);padding:16px;min-width:0;}
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px 12px;flex-wrap:wrap;margin-bottom:12px;}
+.sec-head .meta{font-family:var(--f-pix);color:var(--muted);font-size:.9rem;}
+
+/* HUD */
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;}
+.top .sub{color:var(--muted);font-size:.9rem;}
+.hud{display:grid;grid-template-columns:96px 1fr;gap:16px;align-items:center;}
+.hero{background:var(--win2);border:3px solid var(--line);padding:8px;display:grid;place-items:center;}
+.hero svg{width:100%;height:auto;max-width:80px;display:block;image-rendering:pixelated;}
+.hud-main{display:grid;gap:10px;min-width:0;}
+.who{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;}
+.who .lvl{font-family:var(--f-pix);font-size:1.7rem;color:var(--gold);line-height:1;}
+.who .title{font-family:var(--f-pix);font-size:1rem;}
+.meter{display:grid;gap:3px;}
+.meter .lab{display:flex;justify-content:space-between;gap:8px;font-family:var(--f-pix);font-size:.82rem;color:var(--muted);flex-wrap:wrap;}
+.meter .lab b{color:var(--ink);font-weight:500;}
+.bar{height:16px;background:var(--bg);border:2px solid var(--line);position:relative;overflow:hidden;}
+.bar i{display:block;height:100%;transition:width .35s steps(12);}
+.bar.xp i{background:var(--gold);}
+.bar.hp i{background:var(--hp);}
+.bar.ok i{background:var(--ok);}
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{font-family:var(--f-pix);font-size:.82rem;border:2px solid var(--line);padding:2px 8px;background:var(--win2);white-space:nowrap;}
+.chip.hot{border-color:var(--gold);color:var(--gold);}
+@media (max-width:480px){.hud{grid-template-columns:72px 1fr;gap:12px;}.hero{padding:4px;}}
+
+/* navegação de dia */
+.nav{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;}
+.nav .mid{text-align:center;min-width:0;}
+.nav .mid .d{font-family:var(--f-pix);font-size:1.15rem;}
+.nav .mid .s{color:var(--muted);font-size:.85rem;}
+.btn{font-family:var(--f-pix);background:var(--win2);border:3px solid var(--line);padding:6px 12px;min-height:44px;min-width:44px;box-shadow:3px 3px 0 var(--shadow);}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--shadow);}
+.btn[disabled]{opacity:.4;cursor:not-allowed;}
+.btn.gold{background:var(--gold);color:var(--on-gold);border-color:var(--gold);}
+.btn.bad{border-color:var(--hp);}
+.subnav{display:flex;justify-content:center;margin-top:-6px;}
+
+/* missão principal */
+.mission{border-color:var(--gold);display:grid;grid-template-columns:1fr auto;gap:10px 14px;align-items:center;}
+.mission .tag{font-family:var(--f-pix);font-size:.8rem;color:var(--gold);text-transform:uppercase;letter-spacing:.08em;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.mission h3{font-size:1.25rem;margin:2px 0 6px;}
+.mission p{margin:0;white-space:pre-line;max-width:62ch;}
+.mission .xp{font-family:var(--f-pix);color:var(--gold);margin-top:8px;display:block;}
+.boss{background:var(--hp);color:#fff;font-family:var(--f-pix);font-size:.75rem;padding:1px 7px;letter-spacing:.08em;}
+
+/* missões */
+ul.quests{list-style:none;margin:0;padding:0;display:grid;gap:8px;}
+.q{display:grid;grid-template-columns:44px 1fr auto 44px;gap:6px 8px;align-items:center;padding:6px 4px 6px 4px;border:2px solid var(--line);background:var(--win2);}
+.q.done{opacity:.62;}
+.q.done .qt{text-decoration:line-through;text-decoration-thickness:2px;}
+.qtime{font-family:var(--f-pix);font-size:.8rem;color:var(--muted);}
+.qt{font-weight:600;overflow-wrap:anywhere;}
+.qn{display:block;color:var(--muted);font-size:.85rem;font-weight:400;}
+.cat{display:inline-block;font-family:var(--f-pix);font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;margin-right:6px;}
+.c-mente{color:var(--mente);}.c-espirito{color:var(--espirito);}.c-corpo{color:var(--corpo);}.c-oficio{color:var(--oficio);}
+.qxp{font-family:var(--f-pix);color:var(--gold);white-space:nowrap;font-size:.95rem;}
+.miss{width:36px;height:36px;margin:4px;display:grid;place-items:center;border:3px solid var(--line);background:var(--bg);color:var(--muted);font-family:var(--f-pix);font-size:1rem;line-height:1;padding:0;}
+.miss.on{background:var(--hp);border-color:var(--hp);color:#fff;}
+.miss:disabled{opacity:.4;cursor:not-allowed;}
+.q.miss-row{border-color:var(--hp);background:color-mix(in srgb,var(--hp) 14%,var(--win2));}
+.q.miss-row .qt{color:var(--muted);}
+.mission.missed{border-color:var(--hp);}
+.mact{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.check{position:relative;width:44px;height:44px;display:grid;place-items:center;cursor:pointer;}
+.check input{appearance:none;-webkit-appearance:none;width:28px;height:28px;margin:0;border:3px solid var(--ink);background:var(--bg);cursor:pointer;display:grid;place-items:center;}
+.check input:checked{background:var(--gold);border-color:var(--gold);}
+.check input:checked::after{content:"";width:7px;height:14px;border:solid var(--on-gold);border-width:0 4px 4px 0;transform:rotate(45deg) translate(-1px,-1px);}
+.check input:disabled{opacity:.4;cursor:not-allowed;}
+.check.big input{width:40px;height:40px;}
+.check.big input:checked::after{width:10px;height:20px;}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+.note{color:var(--muted);font-size:.85rem;margin:10px 0 0;}
+.dayxp{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;font-family:var(--f-pix);font-size:.9rem;}
+.dayxp .g{color:var(--gold);}.dayxp .r{color:var(--hp);}
+
+/* tentações */
+.vices{list-style:none;margin:0;padding:0;display:grid;gap:8px;}
+.v{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;border:2px solid var(--line);background:var(--win2);padding:8px 10px;}
+.v .nm{font-weight:600;overflow-wrap:anywhere;}
+.v .pen{font-family:var(--f-pix);color:var(--hp);font-size:.85rem;}
+.v .acts{display:flex;gap:6px;align-items:center;}
+.v .cnt{font-family:var(--f-pix);min-width:2ch;text-align:center;}
+.vadd{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.vadd input[type=text]{flex:1 1 180px;min-width:0;background:var(--bg);border:3px solid var(--line);padding:8px 10px;min-height:44px;}
+.vadd select{background:var(--bg);border:3px solid var(--line);padding:8px;min-height:44px;}
+.x{background:transparent;border:0;color:var(--muted);min-width:44px;min-height:44px;font-family:var(--f-pix);}
+
+/* atributos */
+.attrs{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;}
+.attr .lab{display:flex;justify-content:space-between;font-family:var(--f-pix);font-size:.9rem;margin-bottom:3px;}
+.attr .bar i{background:currentColor;}
+
+/* dívida */
+.debt{list-style:none;margin:0;padding:0;display:grid;gap:8px;}
+.debt li{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;border:2px solid var(--line);background:var(--win2);padding:8px 10px;}
+.debt .when{font-family:var(--f-pix);font-size:.82rem;color:var(--muted);}
+.debt .tx{display:block;font-size:.88rem;color:var(--muted);overflow-wrap:anywhere;}
+
+/* mapa */
+.map{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:8px;}
+.node{font-family:var(--f-pix);background:var(--win2);border:3px solid var(--line);padding:6px 2px;text-align:center;min-height:54px;display:grid;gap:0;align-content:center;}
+.node b{font-size:1.1rem;font-weight:700;}
+.node span{font-size:.72rem;color:var(--muted);}
+.node.full{background:var(--gold);border-color:var(--gold);color:var(--on-gold);}
+.node.full span{color:var(--on-gold);}
+.node.cur{outline:3px solid var(--ink);outline-offset:2px;}
+.node.lock{opacity:.55;}
+.bosses{display:grid;gap:8px;margin-top:14px;}
+.bosses div{display:flex;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;align-items:baseline;border:2px solid var(--hp);padding:8px 10px;background:var(--win2);}
+.bosses .bn{font-weight:600;}
+.bosses .bd{font-family:var(--f-pix);color:var(--hp);}
+
+details.rules summary{cursor:pointer;font-family:var(--f-pix);color:var(--gold);}
+details.rules ul{margin:10px 0 0;padding-left:20px;color:var(--muted);font-size:.92rem;display:grid;gap:6px;}
+.foot{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;}
+.status{font-family:var(--f-pix);font-size:.82rem;color:var(--muted);}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,24px);opacity:0;pointer-events:none;background:var(--gold);color:var(--on-gold);border:3px solid var(--ink);font-family:var(--f-pix);font-size:1.1rem;padding:8px 18px;transition:opacity .15s,transform .15s;max-width:calc(100vw - 32px);text-align:center;z-index:10;}
+.toast.show{opacity:1;transform:translate(-50%,0);}
+.toast.neg{background:var(--hp);color:#fff;}
+.toast.lvl{font-size:1.3rem;}
+@media (prefers-reduced-motion: reduce){.bar i,.toast{transition:none;}}
+</style>
+
+<div class="app" id="app"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const DAYS = [{"wd": "Segunda", "name": "Direito Penal", "items": ["Aplicação da lei penal: lei penal no tempo e no espaço, tempo e lugar do crime, territorialidade e extraterritorialidade, conflito aparente de normas", "Fato típico, ilicitude e culpabilidade", "Consumação e tentativa, concurso de pessoas e concurso de crimes", "Crimes contra a pessoa", "Crimes contra o patrimônio", "Crimes contra a dignidade sexual e crimes contra a fé pública", "Crimes contra a Administração Pública", "Crimes contra a Administração da Justiça e crimes hediondos (Lei 8.072/1990)", "Abuso de Autoridade (Lei 13.869/2019) e Crime de Tortura (Lei 9.455/1997)", "Crimes do ECA (Lei 8.069/1990) e Lei Maria da Penha (Lei 11.340/2006)", "Estatuto do Desarmamento (Lei 10.826/2003) e Crimes Ambientais (Lei 9.605/1998)", "Lei de Drogas (Lei 11.343/2006)", "Lavagem de Dinheiro (Lei 9.613/1998) e disposições constitucionais aplicáveis ao Direito Penal", "Revisão geral: Parte Geral e crimes do Código Penal", "Revisão geral: leis especiais, pontos fracos e simulado"]}, {"wd": "Terça", "name": "Processo Penal", "items": ["CPP: disposições preliminares e princípios do processo penal", "Garantias constitucionais aplicáveis ao Direito Processual Penal", "Inquérito Policial: conceito, natureza e características", "Notícia do crime e formas de instauração do inquérito", "Investigação criminal: diligências, prazos, arquivamento e indiciamento", "Direitos e garantias do investigado", "Prisão: noções gerais, mandado, cumprimento e audiência de custódia", "Prisão em flagrante", "Prisão preventiva", "Prisão temporária, liberdade provisória e medidas cautelares", "Lei 9.099/1995 (Juizados Especiais Criminais): disposições gerais, competência e fase preliminar", "Lei 9.099/1995: procedimento sumaríssimo, transação penal e suspensão condicional do processo", "Revisão: inquérito, investigação e direitos do investigado", "Revisão: prisões e Juizados Especiais Criminais, com simulado"]}, {"wd": "Quarta", "name": "Legislação Específica", "items": ["SUSP (Lei 13.675/2018): disposições gerais, princípios, diretrizes e objetivos", "SUSP: PNSPDS, órgãos integrantes e competências", "SUSP: planos, conselhos, formação, controle e sistema de informações", "Estatuto Geral das Guardas Municipais (Lei 13.022/2014): princípios, competências e criação", "Estatuto Geral das Guardas Municipais: requisitos, capacitação, controle e disposições finais", "Estatuto dos Servidores de São Gonçalo (Lei Municipal 1.416/2022): primeira parte", "Estatuto dos Servidores: segunda parte", "Estatuto dos Servidores: terceira parte", "Estatuto dos Servidores: quarta parte", "Estatuto da Guarda Municipal de São Gonçalo (Lei Municipal 1.625/2026): primeira parte", "Estatuto da Guarda Municipal: segunda parte", "Estatuto da Guarda Municipal: terceira parte", "Revisão: SUSP e Estatuto Geral das Guardas Municipais", "Revisão: leis municipais, com simulado"]}, {"wd": "Quinta", "name": "Legislação Extravagante", "items": ["Crimes Hediondos (Lei 8.072/1990) e Lei de Tortura (Lei 9.455/1997)", "Abuso de Autoridade (Lei 13.869/2019)", "Crimes do ECA (Lei 8.069/1990)", "Estatuto do Desarmamento (Lei 10.826/2003)", "Crimes Ambientais (Lei 9.605/1998): crimes em espécie", "Crimes Ambientais: disposições gerais, infrações administrativas e procedimento", "Lei Maria da Penha (Lei 11.340/2006)", "Lei de Drogas (Lei 11.343/2006): prevenção, usuário e tráfico", "Lei de Drogas: procedimento penal e disposições finais", "Organizações Criminosas (Lei 12.850/2013)", "CTB (Lei 9.503/1997): disposições gerais, Sistema Nacional de Trânsito e normas de circulação", "CTB: habilitação, infrações e penalidades", "CTB: crimes de trânsito", "Revisão geral e simulado"]}, {"wd": "Sexta", "name": "Português", "items": ["Compreensão e interpretação de textos; tipos e gêneros textuais", "Reescrita de textos, níveis de formalidade, adequação da linguagem e do formato ao gênero", "Coesão textual: referenciação, substituição, repetição, conectores e sequenciação", "Ortografia oficial e emprego das letras", "Acentuação gráfica", "Emprego das classes de palavras", "Estrutura morfossintática do período; coordenação entre orações e entre termos", "Subordinação entre orações e entre termos", "Sinais de pontuação", "Concordância verbal e nominal", "Crase", "Colocação dos pronomes átonos; tempos e modos verbais", "Correspondência oficial (Manual de Redação da Presidência da República)", "Revisão geral e simulado de interpretação"]}, {"wd": "Sábado", "name": "Informática", "items": ["Conceitos de informática, hardware e software", "Sistema operacional Windows (XP a 10)", "Linux e software livre", "Processador de texto: Word e LibreOffice Writer", "Planilhas eletrônicas (Excel e Calc): conceitos, fórmulas e referências", "Planilhas: funções e gráficos", "Editor de apresentações (PowerPoint e Impress); tecnologias multimídia, áudio, vídeo e formatos de arquivo", "Redes de computadores: conceitos, equipamentos, topologias, conectores e cabeamento", "Redes: transmissão de sinal, protocolos e redes sem fio", "Internet e Intranet, web 2.0 e 3.0, navegadores (Explorer, Chrome e Firefox) e ferramentas de busca", "Colaboração: correio eletrônico, webmail, grupos de discussão, fóruns, wikis e redes sociais", "Segurança da informação: conceitos, ameaças, vulnerabilidades, vírus e antivírus", "Segurança: backup, criptografia e assinatura digital", "Revisão geral e simulado"]}, {"wd": "Domingo", "name": "Constitucional e Administrativo", "items": ["Constitucional: Arts. 1º a 4º\nAdministrativo: Atos administrativos: conceito, elementos, atributos, classificação e espécies", "Constitucional: Art. 5º, primeira parte\nAdministrativo: Atos: formação, efeitos, extinção, anulação e revogação", "Constitucional: Art. 5º, segunda parte\nAdministrativo: Poderes hierárquico, disciplinar e regulamentar; uso e abuso de poder", "Constitucional: Arts. 6º a 16 (direitos sociais, nacionalidade e direitos políticos)\nAdministrativo: Poder de polícia", "Constitucional: Arts. 18 a 24 (organização político-administrativa e União)\nAdministrativo: Responsabilidade civil do Estado; responsabilidade civil, administrativa e penal dos agentes", "Constitucional: Arts. 25 a 31 (Estados e Municípios)\nAdministrativo: Agentes e servidores públicos; regime jurídico, direitos, deveres e responsabilidades", "Constitucional: Arts. 37 a 41 e art. 77 da Constituição do RJ\nAdministrativo: Concurso, provimento, acessibilidade, estabilidade, remuneração e acumulação", "Constitucional: Poder Legislativo (arts. 44 a 75)\nAdministrativo: Processo Administrativo Disciplinar", "Constitucional: Poder Executivo (arts. 76 a 91)\nAdministrativo: Improbidade Administrativa (Lei 8.429/1992)", "Constitucional: Poder Judiciário e funções essenciais à Justiça (arts. 92 a 135)\nAdministrativo: Revisão: atos administrativos e poderes", "Constitucional: Segurança Pública (art. 144)\nAdministrativo: Revisão: agentes públicos e servidores", "Constitucional: Revisão: arts. 1º a 41\nAdministrativo: Revisão: PAD e improbidade", "Constitucional: Simulado de Constitucional\nAdministrativo: Revisão dos erros", "Constitucional: Revisão dos erros\nAdministrativo: Simulado de Administrativo"]}];
+
+/* Plano de Vida: [id, hora, título, nota, atributo, XP] — índice 0 = segunda */
+const LIFE = [
+ [['am','06:30','Oração da manhã','10 min','espirito',10],['lt','07:00','Leitura espiritual','No deslocamento','espirito',10],['tc1','07:00','Terço na ida','No deslocamento','espirito',10,1],['au','09:00','Aulas','Direito do Idoso e Processo Penal II','mente',40],['tc2','13:00','Terço na volta','No deslocamento','espirito',10,1],['ac','17:00','Academia','','corpo',40],['jj','20:00','Jiu-Jitsu','','corpo',50],['an','22:30','Oração noturna','Com exame do dia','espirito',10]],
+ [['am','06:30','Oração da manhã','10 min','espirito',10],['lt','07:00','Leitura espiritual','No deslocamento','espirito',10],['tc1','07:00','Terço na ida','No deslocamento','espirito',10,1],['au','09:00','Aulas da manhã','Propriedade Intelectual e Estágio Supervisionado II','mente',40],['an1','18:00','Aulas da noite','Direito Financeiro e Tributário I e Direito das Famílias','mente',40],['tc2','22:00','Terço na volta','No deslocamento','espirito',10,1],['an','22:30','Oração noturna','Com exame do dia','espirito',10]],
+ [['am','05:30','Oração da manhã','Curta, 10 min','espirito',10],['lt','06:00','Leitura espiritual','No deslocamento','espirito',10],['tc1','06:00','Terço na ida','No deslocamento','espirito',10,1],['au','07:00','Aulas da manhã','Processo Penal II e Recursos Cíveis','mente',50],['an1','18:00','Aulas da noite','Direito das Famílias e Direito Financeiro e Tributário I','mente',40],['tc2','22:00','Terço na volta','No deslocamento','espirito',10,1],['an','22:30','Oração noturna','Com exame do dia','espirito',10]],
+ [['am','06:30','Oração da manhã','10 min','espirito',10],['lt','07:00','Leitura espiritual','No deslocamento','espirito',10],['tc1','07:00','Terço na ida','No deslocamento','espirito',10,1],['au','09:00','Aulas da manhã','Filosofia da Religião II','mente',35],['ad','14:00','Adoração','Paróquia perto da faculdade','espirito',20],['an1','18:00','Aulas da noite','Criminologia e Laboratório de Prática II','mente',40],['tc2','22:00','Terço na volta','No deslocamento','espirito',10,1],['an','22:30','Oração noturna','Com exame do dia','espirito',10]],
+ [['am','07:00','Oração da manhã','10 min','espirito',10],['ms','08:00','Missa de sexta','Paróquia perto de casa','espirito',30],['lt','09:00','Leitura espiritual','Junto com o lanche','espirito',10],['ia','10:00','Empreendimentos com IA','Estudo com Claude, 3h','oficio',60],['tj','19:00','Treino e Jiu-Jitsu','','corpo',50],['an','22:15','Oração noturna','Com exame do dia','espirito',10]],
+ [['am','07:30','Oração da manhã','10 min','espirito',10],['lt','07:40','Leitura espiritual','10 min','espirito',10],['el','08:00','Estudo livre','3h','mente',50],['ac','11:00','Academia','','corpo',40],['an','22:30','Oração noturna','Com exame do dia','espirito',10]],
+ [['am','07:30','Oração da manhã','10 min','espirito',10],['ms','08:00','Missa dominical','Varia por domingo','espirito',30],['af','12:00','Atividade física','Academia aberta até 14h','corpo',40],['ch','17:00','Ato de caridade','Em família','espirito',20],['an','22:00','Oração noturna','Com exame e insights','espirito',10]]
+];
+const CONSAG_END = '2026-10-31', CONSAG_BONUS = 150;
+const STUDY_TIME = ['14:00','14:00','14:00','14:30','14:30','14:00','14:00'];
+const CATS = {mente:'Mente',espirito:'Espírito',corpo:'Corpo',oficio:'Ofício'};
+const WD = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
+const TIERS = ['Calouro do Fórum','Estagiário','Bacharelando','Examinando da Ordem','Residente do TJ','Guardião da Lei','Lenda do Foro'];
+const TIER_COLORS = ['#62AEFF','#46D9A2','#C8A2FF','#FF915E','#F5B942','#F0525C'];
+const DEFAULT_VICES = [
+ {id:'redes',name:'Rolagem infinita nas redes sociais',xp:15,hp:10},
+ {id:'jogos',name:'Jogos ou séries fora de hora',xp:20,hp:15},
+ {id:'enrolar',name:'Enrolar no horário de estudo',xp:20,hp:15},
+ {id:'comida',name:'Comida fora do plano alimentar',xp:15,hp:10},
+ {id:'sono',name:'Dormir tarde, fora do horário',xp:15,hp:10}
+];
+
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2,'0');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtN = n => Math.round(n).toLocaleString('pt-BR');
+const iso = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parse = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y,m-1,d); };
+const addDays = (d,n) => new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
+const dow = d => (d.getDay()+6)%7;
+const fmtD = d => pad(d.getDate())+'/'+pad(d.getMonth()+1);
+const daysBetween = (a,b) => Math.round((b-a)/864e5);
+
+const START = new Date(2026,9,5), END = new Date(2027,0,11);
+const now0 = new Date();
+const TODAY = new Date(now0.getFullYear(),now0.getMonth(),now0.getDate());
+const clampD = d => d < START ? START : (d > END ? END : d);
+
+/* sessões do cronograma */
+const SESS = [], SBK = {}, SBD = {};
+DAYS.forEach((day,d) => day.items.forEach((text,i) => {
+  const k = i+1, boss = /revis[ãa]o|simulado/i.test(text);
+  const s = {d,k,key:d+'-'+k,subj:day.name,text,boss,xp:boss?120:80,date:addDays(START,7*(k-1)+d),time:STUDY_TIME[d]};
+  SESS.push(s); SBK[s.key] = s; SBD[iso(s.date)] = s;
+}));
+
+function questsFor(D){
+  const list = LIFE[dow(D)].map(([id,time,title,note,cat,xp,side]) => ({kind:'life',id,time,title,note,cat,xp,side:!!side}));
+  if (iso(D) <= CONSAG_END) list.push({kind:'life',id:'cs',time:'99:00',title:'Consagração a São José',note:'Até 31/10 · +'+CONSAG_BONUS+' XP de bônus no último dia',cat:'espirito',xp:25,side:true});
+  const s = SBD[iso(D)];
+  if (s) list.push({kind:'study',id:'S'+s.key,key:s.key,time:s.time,title:s.subj,note:s.text,cat:'mente',xp:s.xp,boss:s.boss});
+  return list.sort((a,b) => a.time < b.time ? -1 : a.time > b.time ? 1 : (a.kind === 'study' ? -1 : 1));
+}
+
+/* estado */
+const LS = 'jornada-aprovacao-v1';
+function fresh(){ return {q:{},study:{},vice:{},viceDefs:DEFAULT_VICES.map(v => ({...v})),savedAt:0}; }
+function normalize(s){
+  const b = fresh(); s = s && typeof s === 'object' ? s : {};
+  return {q:s.q||b.q, study:s.study||b.study, vice:s.vice||b.vice, viceDefs:(Array.isArray(s.viceDefs)&&s.viceDefs.length)?s.viceDefs:b.viceDefs, savedAt:s.savedAt||0};
+}
+let state;
+try { state = normalize(JSON.parse(localStorage.getItem(LS)||'null')); } catch(e){ state = fresh(); }
+let sel = clampD(TODAY);
+let status = 'local', doc = null, resetArmed = false;
+
+/* cálculo central */
+function compute(){
+  const sums = {}, attr = {mente:0,espirito:0,corpo:0,oficio:0};
+  let total = 0, streak = 0;
+  const last = TODAY < START ? null : (TODAY > END ? END : TODAY);
+  if (last){
+    for (let D = START; D <= last; D = addDays(D,1)){
+      const k = iso(D), qs = questsFor(D), qm = state.q[k] || {};
+      let done = 0, missed = 0, count = 0; const base = [];
+      qs.forEach(q => {
+        const ok = q.kind === 'study' ? state.study[q.key] === k : qm[q.id] === 1;
+        if (!q.side) count++;
+        if (ok){ if (!q.side) done++; base.push([q.cat,q.xp]); }
+        else if (qm[q.id] === 2 && !q.side) missed++;
+      });
+      Object.keys(state.study).forEach(key => {
+        if (state.study[key] === k && SBK[key] && SBK[key].date < D) base.push(['mente',Math.round(SBK[key].xp*0.7)]);
+      });
+      const mult = 1 + Math.min(streak,10)*0.05;
+      let earned = 0;
+      base.forEach(([c,x]) => { const v = Math.round(x*mult); earned += v; attr[c] += v; });
+      const vm = state.vice[k] || {};
+      let pen = 0, hp = 0, vc = 0;
+      state.viceDefs.forEach(v => { const n = vm[v.id] || 0; pen += n*v.xp; hp += n*v.hp; vc += n; });
+      const perfect = count > 0 && done === count && vc === 0;
+      const csFinal = k === CONSAG_END && qm['cs'] === 1;
+      const bonus = (perfect ? 50 : 0) + (csFinal ? CONSAG_BONUS : 0);
+      total += earned + bonus - pen;
+      const qual = (count ? done/count >= 0.7 : true) && vc === 0;
+      sums[k] = {earned,pen,bonus,done,count,missed,mult,hp:Math.max(0,100-hp),qual,vc,perfect,csFinal};
+      if (D < TODAY) streak = qual ? streak+1 : 0;
+    }
+  }
+  const ts = sums[iso(TODAY)];
+  return {sums,attr,total:Math.max(0,total),streak,todayQual:!!(ts && ts.qual && ts.done>0)};
+}
+function levelInfo(T){
+  let L = 1; while (T >= 60*(L+1)*L) L++;
+  return {L,cur:60*L*(L-1),next:60*L*(L+1),title:TIERS[Math.min(TIERS.length-1,Math.floor((L-1)/3))]};
+}
+function attrInfo(x){ let L = 1; while (x >= 40*L*L) L++; return {L,cur:40*(L-1)*(L-1),next:40*L*L}; }
+
+/* sprite */
+const SPR = ['....hhhh....','...hhhhhh...','...hssssh...','...sesses...','...ssssss...','....ssss....','..cccccccc..','.sccccccccs.','.sccbbbbccs.','..ccbwwbcc..','..cccccccc..','...kkkkkk...','...kk..kk...','..kkk..kkk..'];
+function sprite(L){
+  const pal = {h:'#5B3A29',s:'#F2C79A',e:'#2B2140',c:TIER_COLORS[Math.min(5,Math.floor((L-1)/3))],k:'#3A3358',b:'#F5B942',w:'#FFF8E0'};
+  let r = '';
+  SPR.forEach((row,y) => [...row].forEach((ch,x) => { if (pal[ch]) r += `<rect x="${x}" y="${y}" width="1" height="1" fill="${pal[ch]}"/>`; }));
+  return `<svg viewBox="0 0 12 14" shape-rendering="crispEdges" role="img" aria-label="Seu personagem">${r}</svg>`;
+}
+
+/* persistência */
+let saving = false, dirty = false, timer = null;
+function persist(){
+  state.savedAt = Date.now();
+  try { localStorage.setItem(LS,JSON.stringify(state)); } catch(e){}
+  dirty = true; clearTimeout(timer); timer = setTimeout(flush,700);
+}
+async function flush(){
+  if (!doc){ status = 'local'; paintStatus(); return; }
+  if (saving){ timer = setTimeout(flush,400); return; }
+  saving = true; dirty = false;
+  try { await doc.set({json:JSON.stringify(state),savedAt:state.savedAt}); status = 'cloud'; }
+  catch(e){ status = 'local'; }
+  saving = false; paintStatus();
+  if (dirty) flush();
+}
+function paintStatus(){
+  const el = $('#status'); if (!el) return;
+  el.textContent = status === 'cloud' ? 'Progresso salvo na sua conta' : 'Progresso salvo neste navegador';
+}
+async function initCloud(){
+  try {
+    if (!window.claude || !window.claude.use) return;
+    const user = await window.claude.use('user');
+    const db = await window.claude.use('db');
+    if (!user || !db) return;
+    const id = await user.id();
+    if (!id) return;
+    doc = db.doc('data/users/'+id+'/save');
+    doc.onSnapshot(snap => {
+      if (snap.exists){
+        const d = snap.data();
+        if (d && d.json && d.savedAt > (state.savedAt||0) && !snap.metadata.hasPendingWrites){
+          try { state = normalize(JSON.parse(d.json)); localStorage.setItem(LS,JSON.stringify(state)); } catch(e){}
+          render();
+        }
+        status = 'cloud';
+      } else if (state.savedAt){ flush(); }
+      else status = 'cloud';
+      paintStatus();
+    }, () => { status = 'local'; paintStatus(); });
+  } catch(e){ status = 'local'; }
+}
+
+/* sons sintetizados (sem arquivos) */
+let audioCtx = null, soundOn = true;
+try { soundOn = localStorage.getItem(LS+'-snd') !== 'off'; } catch(e){}
+function ac(){
+  try {
+    if (!audioCtx){ const A = window.AudioContext || window.webkitAudioContext; if (A) audioCtx = new A(); }
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  } catch(e){}
+  return audioCtx;
+}
+function tone(freq,t0,dur,type,vol){
+  const c = ac(); if (!c) return;
+  const o = c.createOscillator(), g = c.createGain(), t = c.currentTime + t0;
+  o.type = type || 'square'; o.frequency.setValueAtTime(freq,t);
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(vol || 0.07,t+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+dur+0.03);
+}
+const SFX = {
+  coin:[[988,0,.08],[1319,.08,.22]],
+  undo:[[392,0,.08],[294,.08,.14]],
+  hit:[[196,0,.12,'sawtooth'],[147,.1,.12,'sawtooth'],[98,.2,.28,'sawtooth']],
+  boss:[[392,0,.1],[523,.1,.1],[659,.2,.1],[784,.3,.1],[1047,.4,.45]],
+  level:[[523,0,.12],[659,.12,.12],[784,.24,.12],[1047,.36,.12],[784,.48,.1],[1047,.58,.5]],
+  perfect:[[659,0,.1],[784,.1,.1],[988,.2,.1],[1319,.3,.1],[1568,.4,.5]]
+};
+function sfx(name){
+  if (!soundOn || !SFX[name]) return;
+  SFX[name].forEach(([f,t,d,ty]) => tone(f,t,d,ty,0.07));
+}
+
+let tt;
+function toast(msg,kind){
+  const t = $('#toast'); t.textContent = msg; t.className = 'toast show '+(kind||'');
+  clearTimeout(tt); tt = setTimeout(() => { t.className = 'toast'; },1900);
+}
+
+/* render */
+function bar(cls,pct,label){
+  return `<div class="bar ${cls}" role="progressbar" aria-label="${esc(label)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}"><i style="width:${Math.max(0,Math.min(100,pct))}%"></i></div>`;
+}
+function render(){
+  const C = compute(), li = levelInfo(C.total);
+  const k = iso(sel), S = C.sums[k];
+  const future = sel > TODAY;
+  const qs = questsFor(sel), qm = state.q[k] || {};
+  const vm = state.vice[k] || {};
+  const dayHp = (() => { let h = 0; state.viceDefs.forEach(v => h += (vm[v.id]||0)*v.hp); return Math.max(0,100-h); })();
+  const streakShown = C.streak + (C.todayQual ? 1 : 0);
+  const multToday = 1 + Math.min(C.streak,10)*0.05;
+  const mult = S ? S.mult : (sel > TODAY ? multToday : 1);
+  const weekNo = Math.floor(daysBetween(START,sel)/7)+1;
+  let h = '';
+
+  h += `<header class="top"><h1>Jornada da Aprovação</h1><button class="btn" data-act="sound" aria-pressed="${soundOn}">Som ${soundOn?'ligado':'desligado'}</button><span class="sub">Plano de vida + cronograma de estudos, até 11/01/2027</span></header>`;
+
+  h += `<section class="win hud" aria-label="Seu personagem"><div class="hero">${sprite(li.L)}</div><div class="hud-main">
+    <div class="who"><span class="lvl">NV ${li.L}</span><span class="title">${esc(li.title)}</span></div>
+    <div class="meter"><div class="lab"><span>XP</span><b>${fmtN(C.total)} / ${fmtN(li.next)}</b></div>${bar('xp',(C.total-li.cur)/(li.next-li.cur)*100,'Experiência para o próximo nível')}</div>
+    <div class="meter"><div class="lab"><span>HP do dia ${fmtD(sel)}</span><b>${dayHp} / 100</b></div>${bar('hp',dayHp,'Pontos de vida do dia')}</div>
+    <div class="chips"><span class="chip${streakShown>0?' hot':''}">Sequência ${streakShown} ${streakShown===1?'dia':'dias'}</span><span class="chip${multToday>1?' hot':''}">Bônus x${multToday.toFixed(2).replace('.',',')}</span><span class="chip">Faltam ${Math.max(0,daysBetween(TODAY,END))} dias</span></div>
+  </div></section>`;
+
+  h += `<nav class="win nav" aria-label="Escolher o dia"><button class="btn" data-act="prev" aria-label="Dia anterior"${sel<=START?' disabled':''}>◀</button>
+    <div class="mid"><div class="d">${WD[dow(sel)]}, ${fmtD(sel)}</div><div class="s">Capítulo ${weekNo} de 15${sel.getTime()===TODAY.getTime()?' · hoje':''}</div></div>
+    <button class="btn" data-act="next" aria-label="Próximo dia"${sel>=END?' disabled':''}>▶</button></nav>`;
+  if (sel.getTime() !== clampD(TODAY).getTime()) h += `<div class="subnav"><button class="btn gold" data-act="today">Voltar para hoje</button></div>`;
+
+  /* missões */
+  const stat = q => q.kind === 'study' ? (state.study[q.key] ? 'done' : (qm[q.id] === 2 ? 'miss' : '')) : (qm[q.id] === 1 ? 'done' : qm[q.id] === 2 ? 'miss' : '');
+  const dis = future ? ' disabled' : '';
+  const missBtn = (q,st) => `<button class="miss${st==='miss'?' on':''}" data-act="miss" data-id="${q.id}" data-kind="${q.kind}"${q.kind==='study'?` data-key="${q.key}"`:''} aria-pressed="${st==='miss'}" aria-label="Marcar como não feita: ${esc(q.title)}"${dis}>✕</button>`;
+  const checkBox = (q,st) => q.kind === 'study'
+    ? `<input type="checkbox" data-act="study" data-key="${q.key}"${st==='done'?' checked':''}${dis}>`
+    : `<input type="checkbox" data-act="q" data-id="${q.id}"${st==='done'?' checked':''}${dis}>`;
+  const row = q => { const st = stat(q); return `<li class="q${st==='done'?' done':''}${st==='miss'?' miss-row':''}"><label class="check">${checkBox(q,st)}<span class="sr">Feita: ${esc(q.title)}</span></label>
+      <div><span class="qt"><span class="cat c-${q.cat}">${CATS[q.cat]}</span>${esc(q.title)}</span><span class="qn">${q.time<'90'?q.time+(q.note?' · ':''):''}${esc(q.note)}${st==='miss'?' · não fiz':''}</span></div><span class="qxp">+${q.xp}</span>${missBtn(q,st)}</li>`; };
+
+  const sq = qs.find(q => q.kind === 'study');
+  if (sq){
+    const st = stat(sq), c = state.study[sq.key];
+    h += `<section class="win mission${st==='miss'?' missed':''}" aria-label="Missão principal"><div><div class="tag">Missão principal · ${sq.time}${sq.boss?'<span class="boss">CHEFE</span>':''}</div>
+      <h3>${esc(sq.title)}</h3><p>${esc(sq.note)}</p>
+      <span class="xp">+${sq.xp} XP${sq.boss?' (revisão ou simulado)':''}${c && c!==k?' · concluída em '+fmtD(parse(c))+' (70% do XP)':''}${st==='miss'?' · marcada como não feita':''}</span></div>
+      <div class="mact"><label class="check big">${checkBox(sq,st)}<span class="sr">Concluir missão principal</span></label>${missBtn(sq,st)}</div></section>`;
+  }
+
+  const lifeQs = qs.filter(q => q.kind === 'life' && !q.side), sideQs = qs.filter(q => q.side);
+  h += `<section class="win"><div class="sec-head"><h2>Missões do dia</h2><span class="meta">${S ? S.done+' de '+S.count+' cumpridas'+(S.missed?' · '+S.missed+' não feitas':'') : lifeQs.length+' missões'}</span></div><ul class="quests">${lifeQs.map(row).join('')}</ul>`;
+  const pot = qs.filter(q => !q.side).reduce((a,q) => a+q.xp,0);
+  if (future) h += `<p class="note">As missões deste dia abrem quando ele chegar.</p>`;
+  else h += `<div class="dayxp"><span class="g">XP ganho: +${S?fmtN(S.earned+S.bonus):0}</span>${S&&S.pen?`<span class="r">Penalidade: −${fmtN(S.pen)}</span>`:''}<span>Possível: ${fmtN(Math.round(pot*mult))}${S&&S.perfect?'':' (+50 de dia perfeito)'}</span></div>
+    <p class="note">Cumpra 70% das missões sem cair em tentações para manter a sequência. O botão ✕ registra que você não fez.</p>`;
+  h += `</section>`;
+
+  if (sideQs.length){
+    const csDone = Object.keys(state.q).filter(d => d <= CONSAG_END && state.q[d].cs === 1).length;
+    const left = daysBetween(TODAY, parse(CONSAG_END));
+    h += `<section class="win" aria-label="Side quests"><div class="sec-head"><h2>Side quests</h2><span class="meta">bônus, fora da sequência</span></div><ul class="quests">${sideQs.map(row).join('')}</ul>`;
+    if (qs.some(q => q.id === 'cs')) h += `<p class="note">Consagração a São José: ${csDone} ${csDone===1?'dia marcado':'dias marcados'}. ${left>0?'Faltam '+left+' dias para 31/10.':left===0?'Hoje é o último dia.':'O prazo terminou.'} Marcar o dia 31/10 rende +${CONSAG_BONUS} XP.</p>`;
+    h += `</section>`;
+  }
+
+  /* tentações */
+  h += `<section class="win" aria-label="Tentações"><div class="sec-head"><h2>Tentações</h2><span class="meta">toque quando cair</span></div><ul class="vices">`;
+  state.viceDefs.filter(v => !v.hidden).forEach(v => {
+    const n = vm[v.id] || 0;
+    h += `<li class="v"><div><div class="nm">${esc(v.name)}</div><span class="pen">−${v.xp} XP · −${v.hp} HP</span></div>
+      <div class="acts"><button class="btn" data-act="unvice" data-id="${esc(v.id)}" aria-label="Desfazer ${esc(v.name)}"${(n<1||future)?' disabled':''}>−</button><span class="cnt" aria-live="polite">${n}</span><button class="btn bad" data-act="vice" data-id="${esc(v.id)}" aria-label="Registrar queda: ${esc(v.name)}"${future?' disabled':''}>Caí</button><button class="x" data-act="vicedel" data-id="${esc(v.id)}" aria-label="Remover ${esc(v.name)} da lista">×</button></div></li>`;
+  });
+  h += `</ul><form class="vadd" id="vform"><input type="text" id="vname" maxlength="60" placeholder="Seu próprio vício" aria-label="Nome do vício"><select id="vxp" aria-label="Gravidade"><option value="10">Leve · −10 XP</option><option value="20" selected>Médio · −20 XP</option><option value="40">Grave · −40 XP</option></select><button class="btn gold" type="submit">Adicionar</button></form></section>`;
+
+  /* atributos */
+  h += `<section class="win"><div class="sec-head"><h2>Atributos</h2><span class="meta">XP acumulado por área</span></div><div class="attrs">`;
+  Object.keys(CATS).forEach(c => {
+    const a = attrInfo(C.attr[c]);
+    h += `<div class="attr c-${c}"><div class="lab"><span>${CATS[c]} · NV ${a.L}</span><span>${fmtN(C.attr[c])} XP</span></div>${bar('',(C.attr[c]-a.cur)/(a.next-a.cur)*100,CATS[c])}</div>`;
+  });
+  h += `</div></section>`;
+
+  /* dívida de estudo */
+  const debt = SESS.filter(s => s.date < TODAY && !state.study[s.key]);
+  if (debt.length){
+    const show = debt.slice(-8).reverse();
+    h += `<section class="win"><div class="sec-head"><h2>Dívida de estudo</h2><span class="meta">${debt.length} ${debt.length===1?'missão atrasada':'missões atrasadas'}</span></div><ul class="debt">`;
+    show.forEach(s => {
+      h += `<li><div><span class="when">${s.subj} · ${fmtD(s.date)}${s.boss?' · CHEFE':''}</span><span class="tx">${esc(s.text.split('\n')[0])}</span></div><button class="btn" data-act="pay" data-key="${s.key}">Pagar +${Math.round(s.xp*0.7)}</button></li>`;
+    });
+    h += `</ul>${debt.length>show.length?`<p class="note">Mais ${debt.length-show.length} mais antigas esperam por você. Pagar uma dívida rende 70% do XP.</p>`:''}</section>`;
+  }
+
+  /* mapa */
+  h += `<section class="win"><div class="sec-head"><h2>Mapa da jornada</h2><span class="meta">15 capítulos</span></div><div class="map">`;
+  for (let w = 1; w <= 15; w++){
+    const ws = SESS.filter(s => s.k === w), dn2 = ws.filter(s => state.study[s.key]).length;
+    const wStart = addDays(START,7*(w-1)), locked = wStart > TODAY;
+    h += `<button class="node${dn2===ws.length?' full':''}${w===weekNo?' cur':''}${locked&&dn2===0?' lock':''}" data-act="week" data-w="${w}" aria-label="Capítulo ${w}: ${dn2} de ${ws.length} missões de estudo"><b>${w}</b><span>${dn2}/${ws.length}</span></button>`;
+  }
+  h += `</div><div class="bosses">`;
+  [['1ª fase da OAB (48º Exame)',new Date(2027,0,10)],['Fim do cronograma de estudos',END],['2ª fase da OAB',new Date(2027,1,28)]].forEach(([n,dt]) => {
+    const left = daysBetween(TODAY,dt);
+    h += `<div><span class="bn">${n} · ${fmtD(dt)}/${dt.getFullYear()}</span><span class="bd">${left>0?'faltam '+left+' dias':left===0?'é hoje':'concluído'}</span></div>`;
+  });
+  h += `</div></section>`;
+
+  h += `<section class="win"><details class="rules"><summary>Regras do jogo</summary><ul>
+    <li>Cada missão cumprida rende XP. A missão principal vem do cronograma de estudos do dia e vale 80 XP, ou 120 XP quando é revisão ou simulado (chefe).</li>
+    <li>Cair numa tentação tira XP e HP do dia. O HP volta a 100 no dia seguinte, mas o XP perdido não volta.</li>
+    <li>Dias seguidos com 70% das missões e nenhuma queda formam uma sequência. Cada dia dá +5% de XP, até +50%.</li>
+    <li>Dia perfeito (todas as missões e nenhuma queda) rende +50 XP.</li>
+    <li>Missões de estudo atrasadas ficam na dívida e podem ser pagas depois por 70% do XP.</li>
+    <li>O botão ✕ registra que você não fez uma missão. Ela não rende XP e não conta para os 70% da sequência.</li>
+    <li>Side quests (terços e Consagração a São José) são bônus: rendem XP, mas não pesam na sequência nem no dia perfeito.</li>
+    <li>Níveis: o nível N+1 começa em 60 × N × (N+1) de XP.</li></ul></details></section>`;
+
+  h += `<footer class="foot"><span class="status" id="status"></span><button class="btn${resetArmed?' bad':''}" data-act="reset">${resetArmed?'Toque de novo para zerar tudo':'Zerar progresso'}</button></footer>`;
+
+  $('#app').innerHTML = h;
+  paintStatus();
+}
+
+/* ações */
+function changeWith(fn,snd,msg){
+  const kk = iso(sel);
+  const b = compute(), lb = levelInfo(b.total).L, bp = !!(b.sums[kk] && b.sums[kk].perfect), bc = !!(b.sums[kk] && b.sums[kk].csFinal);
+  fn(); persist();
+  const a = compute(), la = levelInfo(a.total), ap = !!(a.sums[kk] && a.sums[kk].perfect), cc = !!(a.sums[kk] && a.sums[kk].csFinal);
+  const delta = a.total - b.total;
+  render();
+  if (la.L > lb){ sfx('level'); toast('NÍVEL '+la.L+'! '+la.title,'lvl'); }
+  else if (cc && !bc){ sfx('level'); toast('Consagração concluída! +'+CONSAG_BONUS+' XP','lvl'); }
+  else if (ap && !bp){ sfx('perfect'); toast('Dia perfeito! +50 XP','lvl'); }
+  else {
+    if (snd) sfx(snd);
+    if (delta !== 0) toast((delta>0?'+':'−')+fmtN(Math.abs(delta))+' XP',delta>0?'':'neg');
+    else if (msg) toast(msg,'neg');
+  }
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b || b.tagName === 'INPUT') return;
+  const a = b.dataset.act, k = iso(sel);
+  if (a === 'sound'){
+    soundOn = !soundOn;
+    try { localStorage.setItem(LS+'-snd', soundOn ? 'on' : 'off'); } catch(e){}
+    render(); sfx('coin');
+  }
+  else if (a === 'miss'){
+    if (sel > TODAY) return;
+    const id = b.dataset.id, was = (state.q[k] || {})[id] === 2;
+    changeWith(() => {
+      const m = state.q[k] = state.q[k] || {};
+      if (was) delete m[id];
+      else { m[id] = 2; if (b.dataset.kind === 'study' && state.study[b.dataset.key] === k) delete state.study[b.dataset.key]; }
+    }, was ? 'undo' : 'hit', was ? '' : 'Marcada como não feita');
+  }
+  else if (a === 'prev'){ sel = clampD(addDays(sel,-1)); render(); }
+  else if (a === 'next'){ sel = clampD(addDays(sel,1)); render(); }
+  else if (a === 'today'){ sel = clampD(TODAY); render(); }
+  else if (a === 'week'){ sel = clampD(addDays(START,7*(Number(b.dataset.w)-1))); render(); window.scrollTo({top:0}); }
+  else if (a === 'vice' || a === 'unvice'){
+    if (sel > TODAY) return;
+    changeWith(() => {
+      const m = state.vice[k] = state.vice[k] || {};
+      m[b.dataset.id] = Math.max(0,(m[b.dataset.id]||0) + (a === 'vice' ? 1 : -1));
+      if (!m[b.dataset.id]) delete m[b.dataset.id];
+    }, a === 'vice' ? 'hit' : 'undo');
+  }
+  else if (a === 'vicedel'){
+    const v = state.viceDefs.find(x => x.id === b.dataset.id);
+    if (v){ v.hidden = true; persist(); render(); }
+  }
+  else if (a === 'pay'){
+    changeWith(() => { state.study[b.dataset.key] = iso(TODAY); },'coin');
+  }
+  else if (a === 'reset'){
+    if (!resetArmed){ resetArmed = true; render(); setTimeout(() => { resetArmed = false; render(); },4000); }
+    else { resetArmed = false; state = fresh(); persist(); render(); toast('Jogo zerado','neg'); }
+  }
+});
+document.addEventListener('change', e => {
+  const t = e.target; if (!t.matches || !t.matches('input[data-act]')) return;
+  const k = iso(sel);
+  if (sel > TODAY){ render(); return; }
+  if (t.dataset.act === 'q'){
+    changeWith(() => {
+      const m = state.q[k] = state.q[k] || {};
+      if (t.checked) m[t.dataset.id] = 1; else delete m[t.dataset.id];
+    }, t.checked ? 'coin' : 'undo');
+  } else if (t.dataset.act === 'study'){
+    changeWith(() => {
+      if (t.checked){ state.study[t.dataset.key] = k; if (state.q[k]) delete state.q[k]['S'+t.dataset.key]; } else delete state.study[t.dataset.key];
+    }, t.checked ? (SBK[t.dataset.key].boss ? 'boss' : 'coin') : 'undo');
+  }
+});
+document.addEventListener('submit', e => {
+  if (e.target.id !== 'vform') return;
+  e.preventDefault();
+  const name = $('#vname').value.trim(); if (!name) return;
+  const xp = Number($('#vxp').value) || 20;
+  state.viceDefs.push({id:'c'+Date.now().toString(36),name,xp,hp:Math.round(xp*0.75)});
+  persist(); render();
+});
+
+render();
+initCloud();
+</script>
+
+</body></html>

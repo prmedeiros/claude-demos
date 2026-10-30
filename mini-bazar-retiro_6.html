@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Mini Bazar do Retiro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F5EFE1;
+    --paper: #FFFDF9;
+    --paper-soft: #FBF5E9;
+    --ink: #2C2420;
+    --ink-soft: #756A5E;
+    --ink-faint: #A79A89;
+    --wine: #6E2439;
+    --wine-dark: #4E1826;
+    --wine-soft: #F0DEE0;
+    --gold: #A8792A;
+    --gold-soft: #EEE0BE;
+    --green: #3F6B4A;
+    --green-soft: #DCEADD;
+    --rust: #9C4A2E;
+    --rust-soft: #F1DDCF;
+    --line: #E3D6BC;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow: 0 3px 14px rgba(78, 40, 20, 0.09);
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--bg);
+    background-image: radial-gradient(circle at 1px 1px, rgba(110,36,57,0.05) 1px, transparent 0);
+    background-size: 22px 22px;
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  #app{ max-width: 640px; margin: 0 auto; min-height: 100vh; display:flex; flex-direction:column; }
+
+  /* Header */
+  .topbar{
+    position: sticky; top:0; z-index:20;
+    background: var(--wine);
+    background-image: linear-gradient(135deg, var(--wine) 0%, var(--wine-dark) 100%);
+    color: #FBF3E7;
+    padding: 16px 18px 14px;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    box-shadow: var(--shadow);
+  }
+  .brand{ display:flex; align-items:center; gap:11px; }
+  .brand-mark{
+    width:38px; height:38px; flex:0 0 auto; border-radius:50%;
+    border: 1.5px dashed rgba(251,243,231,0.55);
+    display:flex; align-items:center; justify-content:center;
+    font-family: var(--font-display); font-size:19px; color: var(--gold-soft);
+  }
+  .brand h1{ font-family: var(--font-display); font-weight:600; font-size:19px; margin:0; letter-spacing:0.01em; line-height:1.15; }
+  .brand p{ margin:2px 0 0; font-size:12px; color: rgba(251,243,231,0.72); font-weight:500; letter-spacing:0.02em; }
+  .totals-chip{
+    text-align:right; flex:0 0 auto;
+  }
+  .totals-chip .amt{ font-family: var(--font-display); font-size:17px; font-weight:600; color:#fff; display:block; line-height:1.1; }
+  .totals-chip .lbl{ font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color: rgba(251,243,231,0.65); }
+
+  /* Tabs */
+  .tabs{
+    position: sticky; top:64px; z-index:19;
+    display:flex; gap:8px; overflow-x:auto;
+    padding: 10px 14px; background: var(--bg);
+    border-bottom: 1px solid var(--line);
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar{ display:none; }
+  .tab{
+    flex: 0 0 auto; padding: 8px 15px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--paper);
+    font-family: var(--font-body); font-weight:600; font-size:13.5px;
+    color: var(--ink-soft); white-space:nowrap; cursor:pointer;
+    transition: all .15s ease;
+  }
+  .tab:hover{ border-color: var(--wine); color: var(--wine); }
+  .tab.active{ background: var(--wine); border-color: var(--wine); color:#fff; }
+
+  .sync-banner{
+    display:flex; align-items:center; gap:8px; justify-content:center;
+    background: var(--gold-soft); color: var(--gold); border-bottom: 1px solid var(--line);
+    padding: 7px 14px; font-size:12.5px; font-weight:700;
+  }
+  .sync-dot{ width:7px; height:7px; border-radius:50%; background: var(--gold); animation: syncPulse 1.1s ease-in-out infinite; flex:0 0 auto; }
+  @keyframes syncPulse{ 0%,100%{ opacity:0.35; transform:scale(0.85); } 50%{ opacity:1; transform:scale(1); } }
+
+  main{ flex:1; padding: 16px 14px 90px; }
+  .view[hidden]{ display:none; }
+
+  /* Cards & forms */
+  .card{
+    background: var(--paper); border:1px solid var(--line); border-radius: var(--radius);
+    padding: 18px; box-shadow: var(--shadow); margin-bottom: 14px;
+  }
+  .card h2{ font-family: var(--font-display); font-size:17px; font-weight:600; margin:0 0 4px; }
+  .card .sub{ font-size:12.5px; color: var(--ink-soft); margin:0 0 14px; line-height:1.4; }
+
+  .field{ margin-bottom: 14px; }
+  .field label, .field .label{ display:block; font-size:12.5px; font-weight:600; color: var(--ink-soft); margin-bottom:5px; text-transform:uppercase; letter-spacing:0.03em; }
+  .field .hint{ display:block; font-size:11px; color: var(--ink-faint); margin-top:4px; font-weight:400; text-transform:none; letter-spacing:0; }
+  select, input[type=text], input[type=number], textarea{
+    width:100%; padding: 11px 12px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--line); background: #fff; color: var(--ink);
+    font-family: var(--font-body); font-size:15px; font-weight:500;
+    appearance:none; -webkit-appearance:none;
+  }
+  select{
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%23756A5E' stroke-width='1.6' fill='none' fill-rule='evenodd'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position: right 12px center; padding-right: 32px;
+  }
+  select:focus, input:focus, textarea:focus{ outline:none; border-color: var(--wine); box-shadow: 0 0 0 3px var(--wine-soft); }
+  .row{ display:flex; gap:10px; }
+  .row .field{ flex:1; min-width:0; }
+
+  .qty-control{ display:flex; align-items:stretch; border:1.5px solid var(--line); border-radius: var(--radius-sm); overflow:hidden; background:#fff; }
+  .qty-control input{ border:none; text-align:center; padding:11px 4px; border-radius:0; -moz-appearance:textfield; }
+  .qty-control input:focus{ box-shadow:none; }
+  .qty-btn{ flex:0 0 40px; border:none; background: var(--paper-soft); color: var(--wine); font-size:19px; font-weight:700; cursor:pointer; }
+  .qty-btn:active{ background: var(--wine-soft); }
+
+  .equipe-row{ display:flex; gap:8px; }
+  .equipe-row select{ flex:1; }
+
+  .btn-ghost{
+    border:1.5px solid var(--line); background:#fff; color: var(--wine); font-weight:600;
+    border-radius: var(--radius-sm); padding: 0 14px; cursor:pointer; font-family: var(--font-body); font-size:13px;
+  }
+  .btn-ghost.small{ flex:0 0 auto; }
+  .btn-ghost:hover{ border-color: var(--wine); }
+
+  .pay-toggle{ display:flex; gap:8px; }
+  .pay-opt{
+    flex:1; padding:11px 8px; border-radius: var(--radius-sm); border:1.5px solid var(--line);
+    background:#fff; font-family: var(--font-body); font-weight:600; font-size:13.5px; color: var(--ink-soft); cursor:pointer;
+    transition: all .15s ease;
+  }
+  .pay-opt.active[data-pago="1"]{ background: var(--green-soft); border-color: var(--green); color: var(--green); }
+  .pay-opt.active[data-pago="0"]{ background: var(--rust-soft); border-color: var(--rust); color: var(--rust); }
+
+  .btn-primary{
+    width:100%; padding: 14px; border-radius: var(--radius-sm); border:none;
+    background: var(--wine); color:#fff; font-family: var(--font-body); font-weight:700; font-size:15.5px;
+    cursor:pointer; letter-spacing:0.01em; box-shadow: 0 2px 8px rgba(110,36,57,0.28);
+  }
+  .btn-primary:hover{ background: var(--wine-dark); }
+  .btn-primary:disabled{ opacity:0.5; cursor:not-allowed; }
+  .btn-block{ display:block; }
+
+  /* Stamps */
+  .stamp{
+    display:inline-flex; align-items:center; justify-content:center;
+    font-family: var(--font-display); font-weight:600; font-size:10.5px; letter-spacing:0.12em; text-transform:uppercase;
+    padding: 3px 9px; border-radius: 999px; border: 1.5px dashed currentColor; transform: rotate(-2.5deg);
+    white-space:nowrap;
+  }
+  .stamp.pago{ color: var(--green); background: var(--green-soft); }
+  .stamp.deve{ color: var(--rust); background: var(--rust-soft); }
+  .stamp.btnlike{ cursor:pointer; }
+
+  /* Lists / rows */
+  .mini-list{ display:flex; flex-direction:column; gap:8px; }
+  .sale-row{
+    display:flex; align-items:center; gap:10px; padding:11px 12px;
+    background: var(--paper-soft); border:1px solid var(--line); border-radius: var(--radius-sm);
+  }
+  .sale-row .info{ flex:1; min-width:0; }
+  .sale-row .prod{ font-weight:700; font-size:13.5px; color: var(--ink); }
+  .sale-row .meta{ font-size:11.5px; color: var(--ink-soft); margin-top:2px; }
+  .sale-row .amt{ font-family: var(--font-display); font-weight:600; font-size:15px; color: var(--wine); white-space:nowrap; }
+  .sale-row .actions{ display:flex; align-items:center; gap:8px; }
+  .icon-btn{
+    border:none; background:transparent; color: var(--ink-faint); cursor:pointer; font-size:16px;
+    width:28px; height:28px; display:flex; align-items:center; justify-content:center; border-radius:50%;
+  }
+  .icon-btn:hover{ background: var(--rust-soft); color: var(--rust); }
+
+  .toolbar{ display:flex; gap:8px; margin-bottom:12px; }
+  .toolbar input[type=text]{ flex:1; }
+  .toolbar select{ flex: 0 0 130px; }
+
+  .empty{ text-align:center; padding: 30px 14px; color: var(--ink-faint); font-size:13.5px; }
+  .empty .glyph{ font-size:26px; display:block; margin-bottom:8px; opacity:0.6; }
+
+  /* Devedores */
+  .devedor-card{ border:1px solid var(--line); border-radius: var(--radius-sm); background: var(--paper-soft); padding:13px 14px; margin-bottom:10px; }
+  .devedor-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; cursor:pointer; }
+  .devedor-name{ font-weight:700; font-size:14.5px; }
+  .devedor-equipe{ font-size:11px; color: var(--ink-soft); margin-top:2px; }
+  .devedor-total{ font-family: var(--font-display); font-weight:700; font-size:16px; color: var(--rust); white-space:nowrap; }
+  .devedor-detail{ margin-top:10px; padding-top:10px; border-top: 1px dashed var(--line); display:none; }
+  .devedor-detail.open{ display:block; }
+  .devedor-item{ display:flex; justify-content:space-between; font-size:12.5px; padding:4px 0; color: var(--ink-soft); }
+  .devedor-item span:last-child{ color: var(--ink); font-weight:600; }
+  .quitar-row{ display:flex; gap:8px; margin-top:10px; }
+  .quitar-row select{ flex:1; }
+  .btn-quitar{ background: var(--green); color:#fff; border:none; border-radius: var(--radius-sm); padding:0 14px; font-weight:700; font-size:13px; cursor:pointer; white-space:nowrap; }
+
+  /* Resumo */
+  .stat-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:14px; }
+  .stat-card{ background: var(--paper); border:1px solid var(--line); border-radius: var(--radius-sm); padding:14px; box-shadow: var(--shadow); }
+  .stat-card .v{ font-family: var(--font-display); font-size:21px; font-weight:700; color: var(--wine); line-height:1.1; }
+  .stat-card .l{ font-size:11px; color: var(--ink-soft); margin-top:4px; text-transform:uppercase; letter-spacing:0.03em; font-weight:600; }
+  .bar-row{ display:flex; align-items:center; gap:10px; margin-bottom:9px; font-size:13px; }
+  .bar-row .name{ flex:0 0 92px; color: var(--ink-soft); font-weight:600; }
+  .bar-track{ flex:1; height:9px; background: var(--paper-soft); border-radius:6px; overflow:hidden; border:1px solid var(--line); }
+  .bar-fill{ height:100%; background: linear-gradient(90deg, var(--gold), var(--wine)); border-radius:6px; }
+  .bar-row .val{ flex:0 0 auto; font-weight:700; font-size:12.5px; color: var(--ink); }
+
+  /* Catálogo */
+  .cat-group{ margin-bottom:16px; }
+  .cat-group h3{ font-family: var(--font-display); font-size:14px; margin:0 0 8px; color: var(--wine); }
+  .cat-item{ display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); }
+  .cat-item .nome{ flex:1; font-size:13.5px; font-weight:600; }
+  .cat-item input[type=number]{ width:82px; padding:7px 8px; font-size:13.5px; }
+  .cat-item .icon-btn{ flex:0 0 auto; }
+
+  .toast{
+    position: fixed; left:50%; bottom:22px; transform: translateX(-50%) translateY(120%);
+    background: var(--ink); color:#fff; padding:11px 18px; border-radius: 999px; font-size:13.5px; font-weight:600;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.25); z-index:50; transition: transform .25s ease; max-width: 90%; text-align:center;
+  }
+  .toast.show{ transform: translateX(-50%) translateY(0); }
+  .toast.error{ background: var(--rust); }
+  .toast.success{ background: var(--green); }
+
+  .section-title{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .section-title h2{ font-family: var(--font-display); font-size:16px; margin:0; }
+  .link-btn{ background:none; border:none; color:var(--wine); font-weight:700; font-size:12.5px; cursor:pointer; padding:0; }
+
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="mainWrap">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">✚</div>
+        <div>
+          <h1>Mini Bazar do Retiro</h1>
+          <p>Registro de vendas</p>
+        </div>
+      </div>
+      <div class="totals-chip" id="chipTotal">
+        <span class="amt">R$ 0,00</span>
+        <span class="lbl">arrecadado</span>
+      </div>
+    </header>
+
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-tab="registrar">Registrar</button>
+      <button class="tab" data-tab="vendas">Vendas</button>
+      <button class="tab" data-tab="devedores">Devedores</button>
+      <button class="tab" data-tab="resumo">Resumo</button>
+      <button class="tab" data-tab="catalogo">Catálogo</button>
+    </nav>
+
+    <div id="syncBanner" class="sync-banner" hidden>
+      <span class="sync-dot"></span>
+      <span class="txt">Sincronizando…</span>
+    </div>
+
+    <main>
+      <section id="view-registrar" class="view"></section>
+      <section id="view-vendas" class="view" hidden></section>
+      <section id="view-devedores" class="view" hidden></section>
+      <section id="view-resumo" class="view" hidden></section>
+      <section id="view-catalogo" class="view" hidden></section>
+    </main>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- Dados iniciais (a partir da planilha do retiro) ---------- */
+const DEFAULT_CATALOGO = [{"id":"broche-grande-ejc","categoria":"Acessórios","nome":"Broche (Grande) EJC","preco":5.0},{"id":"broche-grande-gaby","categoria":"Acessórios","nome":"Broche (Grande) Gaby","preco":5.0},{"id":"broche-pequeno-gaby","categoria":"Acessórios","nome":"Broche (Pequeno) Gaby","preco":4.0},{"id":"chaveiros","categoria":"Acessórios","nome":"Chaveiros","preco":8.0},{"id":"chaveiro-de-14-50","categoria":"Acessórios","nome":"Chaveiro de 14,50","preco":14.5},{"id":"copo","categoria":"Acessórios","nome":"Copo","preco":6.0},{"id":"cordao","categoria":"Acessórios","nome":"Cordão","preco":8.0},{"id":"mochila","categoria":"Acessórios","nome":"Mochila","preco":15.0},{"id":"cartoes","categoria":"Acessórios","nome":"Cartões","preco":1.8},{"id":"terco-pequeno","categoria":"Acessórios","nome":"Terço pequeno","preco":9.0},{"id":"terco-pulseira","categoria":"Acessórios","nome":"Terço Pulseira","preco":13.0},{"id":"terco-medio","categoria":"Acessórios","nome":"Terço médio","preco":15.5},{"id":"terco-meio-g-8x13","categoria":"Acessórios","nome":"Terço meio g 8x13","preco":19.6},{"id":"terco-grande","categoria":"Acessórios","nome":"Terço grande","preco":27.0},{"id":"over-size","categoria":"Acessórios","nome":"Over size","preco":50.0},{"id":"camisa-normal","categoria":"Acessórios","nome":"Camisa Normal","preco":40.0},{"id":"imagem-de-sao-miguel","categoria":"Acessórios","nome":"Imagem de São Miguel","preco":175.0},{"id":"baby-look","categoria":"Acessórios","nome":"Baby Look","preco":40.0},{"id":"moldura-de-cracha","categoria":"Acessórios","nome":"Moldura de Crachá","preco":1.0},{"id":"agua-com-gas","categoria":"Bebidas","nome":"Água com gás","preco":3.5},{"id":"agua-sem-gas","categoria":"Bebidas","nome":"Água sem gás","preco":3.0},{"id":"coca-cola","categoria":"Bebidas","nome":"Coca-Cola","preco":3.5},{"id":"coca-cola-zero","categoria":"Bebidas","nome":"Coca-Cola (Zero)","preco":3.5},{"id":"guarana","categoria":"Bebidas","nome":"Guaraná","preco":3.5},{"id":"guaravita","categoria":"Bebidas","nome":"Guaravita","preco":3.0},{"id":"cafe","categoria":"Bebidas","nome":"Café","preco":2.0},{"id":"salgado-guaravita","categoria":"Promoção","nome":"Salgado + Guaravita","preco":10.0},{"id":"bala","categoria":"Doces","nome":"Bala","preco":0.3},{"id":"bombom","categoria":"Doces","nome":"Bombom","preco":3.0},{"id":"chiclete","categoria":"Doces","nome":"Chiclete","preco":0.6},{"id":"fini","categoria":"Doces","nome":"Fini","preco":1.5},{"id":"freegells","categoria":"Doces","nome":"Freegells","preco":2.5},{"id":"jujuba","categoria":"Doces","nome":"Jujuba","preco":2.0},{"id":"mentos","categoria":"Doces","nome":"Mentos","preco":3.0},{"id":"pacoca","categoria":"Doces","nome":"Paçoca","preco":1.0},{"id":"pirulito","categoria":"Doces","nome":"Pirulito","preco":0.5},{"id":"pe-de-moca","categoria":"Doces","nome":"Pé de moça","preco":2.0},{"id":"bolo-de-cenoura","categoria":"Doces caseiros","nome":"Bolo de cenoura","preco":5.0},{"id":"mousse-de-limao","categoria":"Doces caseiros","nome":"Mousse de limão","preco":5.0},{"id":"pudim","categoria":"Doces caseiros","nome":"Pudim","preco":5.0},{"id":"fandangos","categoria":"Salgados","nome":"Fandangos","preco":12.0},{"id":"salgado","categoria":"Salgados","nome":"Salgado","preco":8.0},{"id":"tirante","categoria":"Salgados","nome":"Tirante","preco":8.0},{"id":"bolsa-mae-da-divina-providencia","categoria":"Acessórios","nome":"Bolsa Mãe da Divina Providência","preco":45.0},{"id":"bolsa-santa-terezinha","categoria":"Acessórios","nome":"Bolsa Santa Terezinha","preco":45.0},{"id":"bolsa-sagrada-familia","categoria":"Acessórios","nome":"Bolsa Sagrada Família","preco":45.0},{"id":"bolsa-santo-antonio","categoria":"Acessórios","nome":"Bolsa Santo Antônio","preco":65.0},{"id":"bolsa-nossa-senhora-do-carmo","categoria":"Acessórios","nome":"Bolsa Nossa Senhora do Carmo","preco":65.0},{"id":"mochila-saco-mariana","categoria":"Acessórios","nome":"Mochila Saco Mariana","preco":55.0},{"id":"mochila-saco-bicicletinha","categoria":"Acessórios","nome":"Mochila Saco Bicicletinha","preco":55.0},{"id":"bolsa-sagrados-coracoes","categoria":"Acessórios","nome":"Bolsa Sagrados Corações","preco":100.0},{"id":"bolsa-benditas","categoria":"Acessórios","nome":"Bolsa Benditas","preco":100.0},{"id":"bolsa-espirito-santo","categoria":"Acessórios","nome":"Bolsa Espírito Santo","preco":80.0},{"id":"bolsa-nossa-senhora-de-fatima","categoria":"Acessórios","nome":"Bolsa Nossa Senhora de Fátima","preco":80.0},{"id":"mochila-sao-francisco","categoria":"Acessórios","nome":"Mochila São Francisco","preco":45.0},{"id":"mochila-nossa-senhora-aparecida","categoria":"Acessórios","nome":"Mochila Nossa Senhora Aparecida","preco":45.0},{"id":"estojos-variados","categoria":"Acessórios","nome":"Estojos Variados","preco":45.0},{"id":"necessaires-pequenas","categoria":"Acessórios","nome":"Necessaires Pequenas","preco":20.0},{"id":"necessaires-grandes","categoria":"Acessórios","nome":"Necessaires Grandes","preco":23.0},{"id":"necessaire-aparecida","categoria":"Acessórios","nome":"Necessaire Aparecida","preco":23.0},{"id":"necessaire-sao-miguel","categoria":"Acessórios","nome":"Necessaire São Miguel","preco":23.0},{"id":"necessaire-reta-sao-bento","categoria":"Acessórios","nome":"Necessaire Reta São Bento","preco":20.0},{"id":"necessaire-sao-cod-1321","categoria":"Acessórios","nome":"Necessaire São (cód. 1321)","preco":23.0},{"id":"bolsas-tnt-s","categoria":"Acessórios","nome":"Bolsas TNT's","preco":13.0},{"id":"necessaire-medalha-gracas","categoria":"Acessórios","nome":"Necessaire Medalha Graças","preco":25.0},{"id":"necessaire-sao-cod-1316","categoria":"Acessórios","nome":"Necessaire São (cód. 1316)","preco":20.0},{"id":"camisa-santa-copa","categoria":"Acessórios","nome":"Camisa Santa Copa","preco":40.0},{"id":"necessaire-pp-nossa-senhora","categoria":"Acessórios","nome":"Necessaire PP Nossa Senhora","preco":15.0},{"id":"bolsa-doc-fatima","categoria":"Acessórios","nome":"Bolsa Doc. Fátima","preco":100.0},{"id":"bolsa-doc-sagrado-coracao","categoria":"Acessórios","nome":"Bolsa Doc. Sagrado Coração","preco":100.0},{"id":"necessaire-bendita","categoria":"Acessórios","nome":"Necessaire Bendita","preco":35.0},{"id":"chaveiros-variados","categoria":"Acessórios","nome":"Chaveiros Variados","preco":13.0},{"id":"casaco-benditas","categoria":"Acessórios","nome":"Casaco Benditas","preco":155.0},{"id":"camisa-guadalupe","categoria":"Acessórios","nome":"Camisa Guadalupe","preco":65.0},{"id":"2-brigadeiros-pacote-c-2","categoria":"Doces","nome":"2 Brigadeiros (pacote c/ 2)","preco":7.0},{"id":"4-brigadeiros-pacote-c-4","categoria":"Doces","nome":"4 Brigadeiros (pacote c/ 4)","preco":12.0},{"id":"donut-no-palito","categoria":"Doces","nome":"Donut no Palito","preco":6.0}];
+
+const DEFAULT_EQUIPES = ["Animação", "Anjo", "Banda", "Café e Lanche", "Compras", "Cozinha", "Creche", "Círculo", "Doutrina", "Ligação", "Meditação", "Mini", "Ordem", "Portaria", "Sala", "Secretaria", "Vigília", "Visitação"];
+
+// Quadro de encontreiros do 6° EJC Barro Vermelho (nome -> equipe), usado só para
+// sugerir a equipe automaticamente quando o nome do comprador bate com alguém
+// da lista de forma única. Nunca trava a escolha — é só um atalho.
+const ROSTER = [{"nome": "Guilherme Costa", "equipe": "Animação"}, {"nome": "Mayara Mendonça", "equipe": "Animação"}, {"nome": "Bruna Gabrich", "equipe": "Animação"}, {"nome": "Douglas Estrela", "equipe": "Animação"}, {"nome": "Giovanna Rodrigues", "equipe": "Animação"}, {"nome": "João Victor Vaz", "equipe": "Animação"}, {"nome": "Marcely Souza", "equipe": "Animação"}, {"nome": "Mariana Rodrigues", "equipe": "Animação"}, {"nome": "Rafaela Rodrigues", "equipe": "Animação"}, {"nome": "Thômaz de Sousa", "equipe": "Animação"}, {"nome": "Gustavo Bezerra Gonçalves", "equipe": "Anjo"}, {"nome": "Lorena Vaz", "equipe": "Anjo"}, {"nome": "Ana Carolina dos Santos", "equipe": "Anjo"}, {"nome": "Clara Martins", "equipe": "Anjo"}, {"nome": "Emilyn Santos", "equipe": "Anjo"}, {"nome": "João Lucas Sales", "equipe": "Anjo"}, {"nome": "João Victor Brasiliano", "equipe": "Anjo"}, {"nome": "Leticia Andrade", "equipe": "Anjo"}, {"nome": "Luana", "equipe": "Anjo"}, {"nome": "Pedro Henrique da Silva", "equipe": "Anjo"}, {"nome": "Thainá dos Santos", "equipe": "Anjo"}, {"nome": "Thesroline França", "equipe": "Anjo"}, {"nome": "Thiago Nictolis", "equipe": "Anjo"}, {"nome": "Tios Renan e Uly", "equipe": "Anjo"}, {"nome": "Andressa Melo", "equipe": "Banda"}, {"nome": "Andrew Lima", "equipe": "Banda"}, {"nome": "Ana Clara do Nascimento", "equipe": "Banda"}, {"nome": "Bárbara Micaela", "equipe": "Banda"}, {"nome": "Camila Vicente", "equipe": "Banda"}, {"nome": "Eduarda Ferreira", "equipe": "Banda"}, {"nome": "Fabiano Riva", "equipe": "Banda"}, {"nome": "Guilherme Santiago", "equipe": "Banda"}, {"nome": "Joana Oliveira", "equipe": "Banda"}, {"nome": "Kerllon Magalhães", "equipe": "Banda"}, {"nome": "Maria Clara da Silva", "equipe": "Banda"}, {"nome": "Milena Fernandes Pereira", "equipe": "Banda"}, {"nome": "Rafael Cunha", "equipe": "Banda"}, {"nome": "Raquel Rodrigues Barcellos", "equipe": "Banda"}, {"nome": "Sarah Uzai", "equipe": "Banda"}, {"nome": "Tios Washigton e Luana", "equipe": "Banda"}, {"nome": "Roberta Araujo", "equipe": "Banda"}, {"nome": "Tios Denisson e Rafaela", "equipe": "Banda"}, {"nome": "Katharina Cunha", "equipe": "Banda"}, {"nome": "Etienny de Araújo", "equipe": "Café e Lanche"}, {"nome": "Leandro da Silva", "equipe": "Café e Lanche"}, {"nome": "Ana Gabriela Cruz", "equipe": "Café e Lanche"}, {"nome": "Bárbara Oliveira (Babi)", "equipe": "Café e Lanche"}, {"nome": "Camilly Monteiro", "equipe": "Café e Lanche"}, {"nome": "Jessica Katherine", "equipe": "Café e Lanche"}, {"nome": "Luís Felipe Goullart", "equipe": "Café e Lanche"}, {"nome": "Maria Luana", "equipe": "Café e Lanche"}, {"nome": "Matheus Vasconcelos Câmara", "equipe": "Café e Lanche"}, {"nome": "Tia Adriana", "equipe": "Café e Lanche"}, {"nome": "Tia Fatima Maciel", "equipe": "Café e Lanche"}, {"nome": "Tia Janaína", "equipe": "Café e Lanche"}, {"nome": "Tios Felipe e Cinthia", "equipe": "Café e Lanche"}, {"nome": "Victor Hugo Brasiliano", "equipe": "Café e Lanche"}, {"nome": "Anderson França", "equipe": "Círculo"}, {"nome": "Joyce Clemente", "equipe": "Círculo"}, {"nome": "Tios Alexandre e Dani", "equipe": "Círculo"}, {"nome": "Brunna de Oliveira", "equipe": "Círculo"}, {"nome": "Rhayssa Alves", "equipe": "Círculo"}, {"nome": "Tios Beto e Daiane", "equipe": "Compras"}, {"nome": "Tios Kelly e Luiz Otávio", "equipe": "Compras"}, {"nome": "Tios Alexandre e Marta", "equipe": "Cozinha"}, {"nome": "Claudia Helena", "equipe": "Cozinha"}, {"nome": "Pedro Henrique Miranda", "equipe": "Cozinha"}, {"nome": "Tia Sonia Silveira", "equipe": "Cozinha"}, {"nome": "Tios Carlos e Marília", "equipe": "Cozinha"}, {"nome": "Tios Celinho e Cristina", "equipe": "Cozinha"}, {"nome": "Tios Igor e Jerusa", "equipe": "Cozinha"}, {"nome": "Tios Marcinho e Beth", "equipe": "Cozinha"}, {"nome": "Tios Nelson e Celia", "equipe": "Cozinha"}, {"nome": "Tios Paulo e Gracimara", "equipe": "Cozinha"}, {"nome": "Tios Peterson e Lucimar", "equipe": "Cozinha"}, {"nome": "Tios Richard e Tati", "equipe": "Cozinha"}, {"nome": "Vanessa", "equipe": "Cozinha"}, {"nome": "Tia Rose", "equipe": "Cozinha"}, {"nome": "Alexandre Eletherio", "equipe": "Creche"}, {"nome": "Thamyres Alves", "equipe": "Creche"}, {"nome": "Glória Nascimento Klafke", "equipe": "Creche"}, {"nome": "João Pedro Lopes", "equipe": "Creche"}, {"nome": "Luis Filipe Muniz", "equipe": "Creche"}, {"nome": "Manuela da Conceição", "equipe": "Creche"}, {"nome": "Polyana Nogueira", "equipe": "Creche"}, {"nome": "Tia Graça", "equipe": "Creche"}, {"nome": "Tia Simone Alves", "equipe": "Creche"}, {"nome": "Victor de Paula", "equipe": "Creche"}, {"nome": "Daniel Louback", "equipe": "Doutrina"}, {"nome": "Daniel Viana", "equipe": "Doutrina"}, {"nome": "Beatriz Pereira", "equipe": "Doutrina"}, {"nome": "Kissila Rodrigues", "equipe": "Doutrina"}, {"nome": "Luan", "equipe": "Doutrina"}, {"nome": "Mell Silva dos Santos", "equipe": "Doutrina"}, {"nome": "Micaele Glória", "equipe": "Doutrina"}, {"nome": "Rafael Melo", "equipe": "Doutrina"}, {"nome": "Tia Jessica", "equipe": "Doutrina"}, {"nome": "Tios Gabriel e Karoline", "equipe": "Doutrina"}, {"nome": "Maria Júlia Alves de Souza", "equipe": "Doutrina"}, {"nome": "Luana Amado", "equipe": "Doutrina"}, {"nome": "Kamille Rosa", "equipe": "Ligação"}, {"nome": "Gabriel Souza", "equipe": "Ligação"}, {"nome": "Lorena Siqueira", "equipe": "Ligação"}, {"nome": "Letícia Guedes", "equipe": "Ligação"}, {"nome": "Erick Miranda", "equipe": "Mini"}, {"nome": "Tios Júnior e Célia", "equipe": "Mini"}, {"nome": "Adriane de Souza", "equipe": "Mini"}, {"nome": "Gabriela Ferreira", "equipe": "Mini"}, {"nome": "Guilherme Souza", "equipe": "Mini"}, {"nome": "Júlia Martins", "equipe": "Mini"}, {"nome": "Larissa Beatriz", "equipe": "Mini"}, {"nome": "Lucas Cândido", "equipe": "Mini"}, {"nome": "Maria Eduarda Almeida", "equipe": "Mini"}, {"nome": "Pedro Rocha", "equipe": "Mini"}, {"nome": "Rodrigo Fontes (Digão)", "equipe": "Mini"}, {"nome": "Tios Marcelo e Rejane", "equipe": "Mini"}, {"nome": "Adriana Motta", "equipe": "Meditação"}, {"nome": "Davi Guimarães", "equipe": "Meditação"}, {"nome": "Ana Victoria", "equipe": "Meditação"}, {"nome": "Danielle Moraes", "equipe": "Meditação"}, {"nome": "Darlan Sodré", "equipe": "Meditação"}, {"nome": "Dayana Pereira", "equipe": "Meditação"}, {"nome": "Gabriel Rangel", "equipe": "Meditação"}, {"nome": "Juliana Vasconcelos", "equipe": "Meditação"}, {"nome": "Paulo Ricardo", "equipe": "Meditação"}, {"nome": "Tios Sandro e Grazi", "equipe": "Meditação"}, {"nome": "Tios Wagner e Flávia", "equipe": "Meditação"}, {"nome": "Gianluca Alves", "equipe": "Portaria"}, {"nome": "Tairine Telles", "equipe": "Portaria"}, {"nome": "Tios Douglas e Aline", "equipe": "Portaria"}, {"nome": "Arthur Dias", "equipe": "Portaria"}, {"nome": "Brendha de Oliveira", "equipe": "Portaria"}, {"nome": "Gabriely Rocha", "equipe": "Portaria"}, {"nome": "João Pedro Correa", "equipe": "Portaria"}, {"nome": "José Carlos", "equipe": "Portaria"}, {"nome": "Leandro", "equipe": "Portaria"}, {"nome": "Marcos Aurélio", "equipe": "Portaria"}, {"nome": "Nicoly Gomes", "equipe": "Portaria"}, {"nome": "Ramana Ramalho", "equipe": "Portaria"}, {"nome": "Rayssa Andrade da Silva", "equipe": "Portaria"}, {"nome": "Thaynara Almeida", "equipe": "Portaria"}, {"nome": "Tios Leandro e Lorrane", "equipe": "Portaria"}, {"nome": "Yasmin Petra", "equipe": "Portaria"}, {"nome": "Tia Andrea", "equipe": "Portaria"}, {"nome": "Roberta Alves", "equipe": "Ordem"}, {"nome": "Rafael Alves", "equipe": "Ordem"}, {"nome": "Bernardo de Souza", "equipe": "Ordem"}, {"nome": "Haila Tavares", "equipe": "Ordem"}, {"nome": "Maria Letícia", "equipe": "Ordem"}, {"nome": "Mirella Cristina", "equipe": "Ordem"}, {"nome": "Nicholas Fiebig", "equipe": "Ordem"}, {"nome": "Ricardo Santos", "equipe": "Ordem"}, {"nome": "Tia Marivel Bandeira", "equipe": "Ordem"}, {"nome": "Shayene Dorzane", "equipe": "Ordem"}, {"nome": "Nicolas", "equipe": "Ordem"}, {"nome": "Antônio Marcos", "equipe": "Ordem"}, {"nome": "Tios Paulo Vitor e Mariana", "equipe": "Sala"}, {"nome": "Tios Felipe Gomes e Myllena Martins", "equipe": "Sala"}, {"nome": "Davi dos Santos Fernandes", "equipe": "Sala"}, {"nome": "Maria Eduarda Alvim", "equipe": "Sala"}, {"nome": "Mariana Maturano", "equipe": "Sala"}, {"nome": "Mariele Bastos", "equipe": "Sala"}, {"nome": "Mônica Mendonça", "equipe": "Sala"}, {"nome": "Thainara Souza", "equipe": "Sala"}, {"nome": "Tia Nini", "equipe": "Sala"}, {"nome": "Tia Simone Linhares", "equipe": "Sala"}, {"nome": "Tios Lucas Diano e Hellen", "equipe": "Sala"}, {"nome": "Tios Nilvado e Marilza", "equipe": "Sala"}, {"nome": "Willys Oliveira", "equipe": "Sala"}, {"nome": "Thaís Marques", "equipe": "Secretaria"}, {"nome": "Gabriely Dutra", "equipe": "Secretaria"}, {"nome": "Gabriel Givigi Barboza", "equipe": "Secretaria"}, {"nome": "Jhuly Oliveira", "equipe": "Secretaria"}, {"nome": "Maira Angelica Nô", "equipe": "Secretaria"}, {"nome": "Elisa Alves", "equipe": "Secretaria"}, {"nome": "Milena Rosa", "equipe": "Vigília"}, {"nome": "Luis Araujo", "equipe": "Vigília"}, {"nome": "Tios Cazuza e Vanessa", "equipe": "Vigília"}, {"nome": "Ellen Câmara", "equipe": "Vigília"}, {"nome": "Maguinha", "equipe": "Vigília"}, {"nome": "Mariana Freitas", "equipe": "Vigília"}, {"nome": "Miguel Maturano", "equipe": "Vigília"}, {"nome": "Pedro Belchior", "equipe": "Vigília"}, {"nome": "Thiago Ângelo", "equipe": "Vigília"}, {"nome": "Tios Bruno e Amanda", "equipe": "Vigília"}, {"nome": "Tios Felipe e Daniele", "equipe": "Vigília"}, {"nome": "Tios Guto e Ritinha", "equipe": "Vigília"}, {"nome": "Tios Álvaro Victor e Letícia", "equipe": "Visitação"}, {"nome": "Tios Anderson e Munique", "equipe": "Visitação"}, {"nome": "Tios André e Cris", "equipe": "Visitação"}, {"nome": "Tios Fabrício e Elaine", "equipe": "Visitação"}, {"nome": "Tios Italo e Luísa", "equipe": "Visitação"}, {"nome": "Tios Paulo e Luciene", "equipe": "Visitação"}, {"nome": "Tios Leandro e Letícia", "equipe": "Visitação"}, {"nome": "Tios Luander e Alana", "equipe": "Visitação"}, {"nome": "Tios Marcelo e Mavilde", "equipe": "Visitação"}, {"nome": "Tios Swen e Carol", "equipe": "Visitação"}, {"nome": "Tios Leonardo e Nathalia", "equipe": "Visitação"}, {"nome": "Tios Lucas e Letícia", "equipe": "Visitação"}, {"nome": "Tios Orivaldo e Cilene", "equipe": "Visitação"}, {"nome": "Tios Everton e Fran", "equipe": "Visitação"}, {"nome": "Tios Jorginho e Juliana", "equipe": "Visitação"}, {"nome": "Tios Cícero e Mônica", "equipe": "Visitação"}, {"nome": "Tios Fabiano e Kaline", "equipe": "Visitação"}, {"nome": "Tios William e Leidiane", "equipe": "Visitação"}, {"nome": "Tios Nenel e Milena", "equipe": "Visitação"}, {"nome": "Tios Renato e Liliane", "equipe": "Visitação"}, {"nome": "Tios José Roberto e Daniele", "equipe": "Visitação"}];
+
+const FORMAS_PAGAMENTO = ["Dinheiro","Pix","Cartão","Outro"];
+
+/* ---------- Estado ---------- */
+let catalogo = [];
+let equipes = [];
+let vendas = [];
+let currentTab = 'registrar';
+let pagoAgora = true;
+let vendasFiltro = { busca: '', status: 'todas' };
+let devedorAberto = null;
+let quitarAberto = null;
+let userInteracted = false;
+
+/* ---------- Utils ---------- */
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function fmtMoney(n){
+  n = Number(n) || 0;
+  return 'R$\u00A0' + n.toLocaleString('pt-BR', { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+function fmtDateTime(ts){
+  const d = new Date(ts);
+  return d.toLocaleDateString('pt-BR', { weekday:'short', day:'2-digit', month:'2-digit' }) + ' · ' +
+         d.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+}
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function toast(msg, type){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(toast._tm);
+  toast._tm = setTimeout(() => { t.className = 'toast'; }, 2600);
+}
+
+/* ---------- Armazenamento ---------- */
+let storageWarned = false;
+let dirtyKeys = new Set();      // chaves com alterações ainda não confirmadas no armazenamento
+let retryTimer = null;
+
+function hasStorage(){
+  return typeof window.storage !== 'undefined' && typeof window.storage.get === 'function' && typeof window.storage.set === 'function';
+}
+function warnStorageOnce(){
+  if(storageWarned) return;
+  storageWarned = true;
+  toast('Este visualizador não está salvando as vendas automaticamente — os dados ficam só nesta aba, enquanto ela estiver aberta.', 'error');
+}
+// Nunca deixa uma chamada de armazenamento travada indefinidamente: se o
+// backend não responder dentro do prazo, trata como falha e segue em frente.
+function withTimeout(promise, ms){
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('tempo esgotado ao acessar o armazenamento')), ms);
+    Promise.resolve(promise).then(
+      v => { clearTimeout(timer); resolve(v); },
+      e => { clearTimeout(timer); reject(e); }
+    );
+  });
+}
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+async function loadKey(key){
+  if(!hasStorage()) return undefined;
+  try{
+    const r = await withTimeout(window.storage.get(key, true), 6000);
+    if(r && typeof r.value === 'string') return JSON.parse(r.value);
+    return undefined;
+  }catch(e){
+    return undefined;
+  }
+}
+
+// Uma única tentativa de gravação, protegida por tempo limite.
+async function saveKeyOnce(key, val){
+  try{
+    const r = await withTimeout(window.storage.set(key, JSON.stringify(val), true), 6000);
+    if(!r) throw new Error('sem confirmação de salvamento');
+    return true;
+  }catch(e){
+    console.error('Falha ao salvar', key, e);
+    return false;
+  }
+}
+
+function getCurrentValueFor(key){
+  if(key === 'catalogo') return catalogo;
+  if(key === 'equipes') return equipes;
+  if(key === 'vendas') return vendas;
+  return null;
+}
+
+// Ponto único de gravação usado por todo o app. NUNCA bloqueia nem desfaz a
+// ação do usuário: os dados já mudaram na memória (fonte da verdade durante a
+// sessão). Se o armazenamento persistente falhar, tenta de novo automaticamente
+// (com pequenos intervalos) até conseguir, e mantém a aba marcada como "não
+// sincronizada" — com aviso na tela e confirmação antes de fechar — enquanto
+// isso não acontecer.
+async function saveKey(key, val){
+  dirtyKeys.add(key);
+  updateSyncBanner();
+
+  if(!hasStorage()){ warnStorageOnce(); updateSyncBanner(); return false; }
+
+  // até 3 tentativas rápidas, com pequeno intervalo crescente entre elas
+  for(let tentativa = 0; tentativa < 3; tentativa++){
+    if(tentativa > 0) await sleep(700 * tentativa);
+    const ok = await saveKeyOnce(key, val);
+    if(ok){
+      dirtyKeys.delete(key);
+      updateSyncBanner();
+      return true;
+    }
+  }
+
+  // não conseguiu de primeira: continua tentando em segundo plano, sem travar a tela
+  warnStorageOnce();
+  scheduleBackgroundRetry();
+  updateSyncBanner();
+  return false;
+}
+
+function scheduleBackgroundRetry(){
+  if(retryTimer) return;
+  retryTimer = setInterval(async () => {
+    if(dirtyKeys.size === 0 || !hasStorage()){ clearInterval(retryTimer); retryTimer = null; updateSyncBanner(); return; }
+    for(const key of Array.from(dirtyKeys)){
+      const ok = await saveKeyOnce(key, getCurrentValueFor(key));
+      if(ok) dirtyKeys.delete(key);
+    }
+    updateSyncBanner();
+  }, 12000);
+}
+
+function updateSyncBanner(){
+  const el = document.getElementById('syncBanner');
+  if(!el) return;
+  if(dirtyKeys.size > 0){
+    el.hidden = false;
+    el.querySelector('.txt').textContent = hasStorage()
+      ? 'Sincronizando… não feche esta aba ainda.'
+      : 'Sem conexão com o armazenamento — os dados ficam só nesta aba.';
+  } else {
+    el.hidden = true;
+  }
+}
+
+function bindBeforeUnloadGuard(){
+  window.addEventListener('beforeunload', (e) => {
+    if(dirtyKeys.size > 0){
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    }
+  });
+}
+
+function bindInteractionTracker(){
+  document.getElementById('mainWrap').addEventListener('input', () => { userInteracted = true; }, true);
+  document.getElementById('mainWrap').addEventListener('mousedown', () => { userInteracted = true; }, true);
+  document.getElementById('mainWrap').addEventListener('touchstart', () => { userInteracted = true; }, true);
+}
+
+async function init(){
+  // Mostra a interface na hora, com os valores padrão — sem tela de carregamento.
+  catalogo = DEFAULT_CATALOGO.slice();
+  equipes = DEFAULT_EQUIPES.slice();
+  vendas = [];
+  bindTabs();
+  bindDevedoresOnce();
+  bindInteractionTracker();
+  bindBeforeUnloadGuard();
+  renderAll();
+
+  // Em segundo plano, busca o que já estiver salvo (ex.: vendas de outros
+  // colegas) e atualiza — mas nunca sobrescreve um formulário que a pessoa já
+  // começou a preencher.
+  try{
+    const resultado = await withTimeout(
+      Promise.all([loadKey('catalogo'), loadKey('equipes'), loadKey('vendas')]),
+      7000
+    ).catch(() => [undefined, undefined, undefined]);
+    const [c, e, v] = resultado;
+    if(c !== undefined) catalogo = c;
+    if(v !== undefined) vendas = v;
+
+    // Une o que já estava salvo com a lista oficial do 6° EJC (do PDF) — nunca
+    // perde uma equipe que a pessoa já tenha adicionado na mão.
+    const equipesBase = (e !== undefined) ? e : [];
+    const equipesUnidas = Array.from(new Set([...equipesBase, ...DEFAULT_EQUIPES]));
+    const equipesMudaram = e === undefined ||
+      equipesUnidas.length !== equipesBase.length ||
+      !equipesUnidas.every(eq => equipesBase.includes(eq));
+    equipes = equipesUnidas;
+
+    if(!userInteracted){ renderAll(); } else { renderChip(); }
+    if(!hasStorage()) warnStorageOnce();
+
+    if(c === undefined) await saveKey('catalogo', catalogo);
+    if(equipesMudaram) await saveKey('equipes', equipes);
+  }catch(err){
+    console.error('Erro ao sincronizar', err);
+    warnStorageOnce();
+  }
+}
+
+/* ---------- Cálculos derivados ---------- */
+function getVendasOrdenadas(){ return vendas.slice().sort((a,b) => b.ts - a.ts); }
+function getCompradoresConhecidos(){
+  const set = new Set();
+  vendas.forEach(v => { if(v.comprador) set.add(v.comprador); });
+  ROSTER.forEach(r => set.add(r.nome));
+  return Array.from(set).sort((a,b) => a.localeCompare(b, 'pt-BR'));
+}
+function normalizaNome(s){
+  return String(s || '').trim().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // remove acentos
+}
+// Mapa nome normalizado -> equipe. Nomes que aparecem em mais de uma equipe
+// ficam de fora (null) para nunca sugerir algo ambíguo.
+const ROSTER_LOOKUP = (function(){
+  const map = new Map();
+  const vistos = new Set();
+  ROSTER.forEach(r => {
+    const chave = normalizaNome(r.nome);
+    if(vistos.has(chave)){ map.set(chave, null); }
+    else { map.set(chave, r.equipe); vistos.add(chave); }
+  });
+  return map;
+})();
+function sugerirEquipePorNome(nome){
+  const chave = normalizaNome(nome);
+  if(!chave) return null;
+  return ROSTER_LOOKUP.has(chave) ? ROSTER_LOOKUP.get(chave) : null;
+}
+function getDevedores(){
+  const map = new Map();
+  vendas.forEach(v => {
+    if(v.pago) return;
+    const key = v.comprador.trim().toLowerCase();
+    if(!map.has(key)) map.set(key, { nome: v.comprador, equipe: v.equipe || '', total: 0, itens: [] });
+    const d = map.get(key);
+    d.total += v.valorTotal;
+    if(!d.equipe && v.equipe) d.equipe = v.equipe;
+    d.itens.push(v);
+  });
+  return Array.from(map.values()).sort((a,b) => b.total - a.total);
+}
+function getResumo(){
+  let arrecadado = 0, pendente = 0, unidades = 0;
+  const porForma = {}; FORMAS_PAGAMENTO.forEach(f => porForma[f] = 0);
+  const porProduto = {}; const porCategoria = {};
+  vendas.forEach(v => {
+    unidades += v.quantidade;
+    porProduto[v.produto] = (porProduto[v.produto] || 0) + v.quantidade;
+    porCategoria[v.categoria] = (porCategoria[v.categoria] || 0) + v.valorTotal;
+    if(v.pago){ arrecadado += v.valorTotal; porForma[v.formaPagamento] = (porForma[v.formaPagamento] || 0) + v.valorTotal; }
+    else{ pendente += v.valorTotal; }
+  });
+  const topProdutos = Object.entries(porProduto).sort((a,b) => b[1]-a[1]).slice(0,5);
+  const categorias = Object.entries(porCategoria).sort((a,b) => b[1]-a[1]);
+  const ticketMedio = vendas.length ? (arrecadado + pendente) / vendas.length : 0;
+  return { arrecadado, pendente, unidades, porForma, topProdutos, categorias, ticketMedio, numVendas: vendas.length };
+}
+
+function renderChip(){
+  const r = getResumo();
+  const chip = document.getElementById('chipTotal');
+  chip.querySelector('.amt').textContent = fmtMoney(r.arrecadado);
+  chip.querySelector('.lbl').textContent = r.pendente > 0 ? `arrecadado · ${fmtMoney(r.pendente)} a receber` : 'arrecadado';
+}
+
+/* ---------- Tabs ---------- */
+function bindTabs(){
+  document.getElementById('tabs').addEventListener('click', (e) => {
+    const btn = e.target.closest('.tab');
+    if(!btn) return;
+    setTab(btn.dataset.tab);
+  });
+}
+function setTab(tab){
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.view').forEach(v => v.hidden = (v.id !== 'view-' + tab));
+  renderView(tab);
+}
+function renderAll(){
+  renderChip();
+  renderView(currentTab);
+}
+function renderView(tab){
+  if(tab === 'registrar') renderRegistrar();
+  else if(tab === 'vendas') renderVendas();
+  else if(tab === 'devedores') renderDevedores();
+  else if(tab === 'resumo') renderResumo();
+  else if(tab === 'catalogo') renderCatalogo();
+}
+
+/* ---------- Aba: Registrar ---------- */
+function catalogoAgrupado(){
+  const grupos = {};
+  catalogo.slice().sort((a,b) => a.nome.localeCompare(b.nome, 'pt-BR')).forEach(p => {
+    if(!grupos[p.categoria]) grupos[p.categoria] = [];
+    grupos[p.categoria].push(p);
+  });
+  return Object.keys(grupos).sort((a,b) => a.localeCompare(b, 'pt-BR')).map(cat => ({ categoria: cat, itens: grupos[cat] }));
+}
+
+function renderRegistrar(){
+  const el = document.getElementById('view-registrar');
+  const grupos = catalogoAgrupado();
+  const ultimas = getVendasOrdenadas().slice(0, 5);
+
+  el.innerHTML = `
+    <div class="card">
+      <h2>Nova venda</h2>
+      <p class="sub">Escolha o produto, quem está comprando e a equipe. Marque se já foi pago ou se fica na conta da pessoa.</p>
+      <form id="formVenda">
+        <div class="field">
+          <label for="selProduto">Produto</label>
+          <select id="selProduto" required>
+            <option value="">Selecione um produto…</option>
+            ${grupos.map(g => `<optgroup label="${esc(g.categoria)}">${g.itens.map(p => `<option value="${p.id}" data-preco="${p.preco}" data-categoria="${esc(p.categoria)}" data-nome="${esc(p.nome)}">${esc(p.nome)} — ${fmtMoney(p.preco)}</option>`).join('')}</optgroup>`).join('')}
+          </select>
+        </div>
+        <div class="row">
+          <div class="field" style="flex:0 0 130px;">
+            <label for="inpQtd">Quantidade</label>
+            <div class="qty-control">
+              <button type="button" class="qty-btn" data-delta="-1">−</button>
+              <input type="number" id="inpQtd" min="1" step="1" value="1" required>
+              <button type="button" class="qty-btn" data-delta="1">+</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="inpPreco">Preço unit. (R$)</label>
+            <input type="number" id="inpPreco" step="0.01" min="0" placeholder="0,00" required>
+          </div>
+        </div>
+        <div class="field">
+          <label for="inpTotal">Valor total (R$)</label>
+          <input type="number" id="inpTotal" step="0.01" min="0" placeholder="0,00" required>
+          <span class="hint">Recalculado automaticamente — ajuste aqui em caso de promoção ou combo.</span>
+        </div>
+        <div class="field">
+          <label for="inpComprador">Comprador</label>
+          <input type="text" id="inpComprador" list="listaCompradores" placeholder="Nome de quem está comprando" autocomplete="off" required>
+          <datalist id="listaCompradores">${getCompradoresConhecidos().map(c => `<option value="${esc(c)}">`).join('')}</datalist>
+        </div>
+        <div class="field">
+          <label for="selEquipe">Equipe</label>
+          <div class="equipe-row">
+            <select id="selEquipe">
+              <option value="">Sem equipe / não sei</option>
+              ${equipes.slice().sort((a,b) => a.localeCompare(b,'pt-BR')).map(eq => `<option value="${esc(eq)}">${esc(eq)}</option>`).join('')}
+            </select>
+            <button type="button" class="btn-ghost small" id="btnNovaEquipe">+ nova</button>
+          </div>
+        </div>
+        <div class="field">
+          <span class="label">Pagamento</span>
+          <div class="pay-toggle">
+            <button type="button" class="pay-opt ${pagoAgora ? 'active':''}" data-pago="1">Pago agora</button>
+            <button type="button" class="pay-opt ${!pagoAgora ? 'active':''}" data-pago="0">Fica na conta</button>
+          </div>
+        </div>
+        <div class="field" id="formaField" ${pagoAgora ? '' : 'hidden'}>
+          <label for="selForma">Forma de pagamento</label>
+          <select id="selForma">
+            ${FORMAS_PAGAMENTO.map(f => `<option value="${f}">${f}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label for="inpObs">Observações (opcional)</label>
+          <input type="text" id="inpObs" placeholder="Ex.: sem gás, combo combinado…">
+        </div>
+        <button type="submit" class="btn-primary btn-block">Registrar venda</button>
+      </form>
+    </div>
+
+    <div class="card" id="ultimasCard" ${ultimas.length ? '' : 'hidden'}>
+      <div class="section-title">
+        <h2 style="font-size:14.5px;">Últimas vendas</h2>
+        ${ultimas.length ? '<button type="button" class="link-btn" id="btnDesfazer">Desfazer última</button>' : ''}
+      </div>
+      <div class="mini-list">
+        ${ultimas.map(saleRowHtml).join('')}
+      </div>
+    </div>
+  `;
+  bindRegistrar();
+}
+
+function saleRowHtml(v){
+  return `
+    <div class="sale-row" data-id="${v.id}">
+      <div class="info">
+        <div class="prod">${esc(v.produto)} × ${v.quantidade}</div>
+        <div class="meta">${fmtDateTime(v.ts)} · ${esc(v.comprador)}${v.equipe ? ' · ' + esc(v.equipe) : ''}</div>
+      </div>
+      <div class="amt">${fmtMoney(v.valorTotal)}</div>
+      <span class="stamp ${v.pago ? 'pago' : 'deve'}">${v.pago ? 'Pago' : 'Deve'}</span>
+    </div>
+  `;
+}
+
+function bindRegistrar(){
+  const form = document.getElementById('formVenda');
+  const selProduto = document.getElementById('selProduto');
+  const inpQtd = document.getElementById('inpQtd');
+  const inpPreco = document.getElementById('inpPreco');
+  const inpTotal = document.getElementById('inpTotal');
+
+  function recalcTotal(){
+    const q = parseFloat(inpQtd.value) || 0;
+    const p = parseFloat(inpPreco.value) || 0;
+    inpTotal.value = (q * p).toFixed(2);
+  }
+  selProduto.addEventListener('change', () => {
+    const opt = selProduto.selectedOptions[0];
+    if(opt && opt.dataset.preco){ inpPreco.value = parseFloat(opt.dataset.preco).toFixed(2); recalcTotal(); }
+  });
+  inpQtd.addEventListener('input', recalcTotal);
+  inpPreco.addEventListener('input', recalcTotal);
+
+  // Sugere a equipe automaticamente quando o nome do comprador bate, de forma
+  // única, com alguém do quadro de encontreiros — nunca sobrescreve uma
+  // escolha feita manualmente na equipe.
+  const inpComprador = document.getElementById('inpComprador');
+  const selEquipe = document.getElementById('selEquipe');
+  let equipeOrigem = 'none'; // 'none' | 'auto' | 'manual'
+  selEquipe.addEventListener('change', () => { equipeOrigem = 'manual'; });
+  inpComprador.addEventListener('input', () => {
+    if(equipeOrigem === 'manual') return;
+    const sugestao = sugerirEquipePorNome(inpComprador.value);
+    if(sugestao){ selEquipe.value = sugestao; equipeOrigem = 'auto'; }
+    else if(equipeOrigem === 'auto'){ selEquipe.value = ''; equipeOrigem = 'none'; }
+  });
+
+  document.querySelectorAll('.qty-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const delta = parseInt(btn.dataset.delta, 10);
+      const cur = Math.max(1, (parseInt(inpQtd.value, 10) || 1) + delta);
+      inpQtd.value = cur; recalcTotal();
+    });
+  });
+
+  document.querySelectorAll('.pay-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      pagoAgora = btn.dataset.pago === '1';
+      document.querySelectorAll('.pay-opt').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('formaField').hidden = !pagoAgora;
+    });
+  });
+
+  document.getElementById('btnNovaEquipe').addEventListener('click', () => {
+    const nome = (prompt('Nome da nova equipe:') || '').trim();
+    if(!nome) return;
+    if(equipes.some(e => e.toLowerCase() === nome.toLowerCase())){ toast('Essa equipe já existe.'); return; }
+    equipes.push(nome);
+    saveKey('equipes', equipes);
+    renderRegistrar();
+    toast('Equipe adicionada.', 'success');
+    setTimeout(() => {
+      const sel = document.getElementById('selEquipe');
+      if(sel) sel.value = nome;
+    }, 0);
+  });
+
+  const btnDesfazer = document.getElementById('btnDesfazer');
+  if(btnDesfazer){
+    btnDesfazer.addEventListener('click', async () => {
+      const ultimas = getVendasOrdenadas();
+      if(!ultimas.length) return;
+      const alvo = ultimas[0];
+      if(!confirm(`Desfazer a venda de "${alvo.produto}" para ${alvo.comprador}?`)) return;
+      await removeVenda(alvo.id);
+      renderRegistrar();
+      renderChip();
+    });
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const opt = selProduto.selectedOptions[0];
+    if(!opt || !opt.value){ toast('Selecione um produto.', 'error'); return; }
+    const comprador = document.getElementById('inpComprador').value.trim();
+    if(!comprador){ toast('Informe o nome do comprador.', 'error'); return; }
+    const equipe = document.getElementById('selEquipe').value;
+    const qtd = parseInt(inpQtd.value, 10) || 1;
+    const preco = parseFloat(inpPreco.value) || 0;
+    const total = parseFloat(inpTotal.value) || 0;
+    const obs = document.getElementById('inpObs').value.trim();
+    const forma = pagoAgora ? document.getElementById('selForma').value : null;
+
+    const venda = {
+      id: uid(), ts: Date.now(),
+      produto: opt.dataset.nome, categoria: opt.dataset.categoria,
+      precoUnit: preco, quantidade: qtd, valorTotal: total,
+      comprador, equipe, pago: pagoAgora, formaPagamento: forma,
+      obs: obs || null
+    };
+
+    vendas.unshift(venda);
+    renderChip();
+    renderRegistrar();
+    document.getElementById('selProduto').focus();
+    toast('Venda registrada!', 'success');
+    await saveKey('vendas', vendas);
+  });
+}
+
+async function removeVenda(id){
+  const idx = vendas.findIndex(v => v.id === id);
+  if(idx === -1) return false;
+  vendas.splice(idx, 1);
+  toast('Venda removida.', 'success');
+  await saveKey('vendas', vendas);
+  return true;
+}
+async function updateVenda(id, patch){
+  const idx = vendas.findIndex(v => v.id === id);
+  if(idx === -1) return false;
+  Object.assign(vendas[idx], patch);
+  await saveKey('vendas', vendas);
+  return true;
+}
+
+/* ---------- Aba: Vendas ---------- */
+function renderVendas(){
+  const el = document.getElementById('view-vendas');
+  let lista = getVendasOrdenadas();
+  const busca = vendasFiltro.busca.toLowerCase();
+  if(busca){
+    lista = lista.filter(v => v.comprador.toLowerCase().includes(busca) || v.produto.toLowerCase().includes(busca) || (v.equipe||'').toLowerCase().includes(busca));
+  }
+  if(vendasFiltro.status === 'pago') lista = lista.filter(v => v.pago);
+  if(vendasFiltro.status === 'deve') lista = lista.filter(v => !v.pago);
+
+  el.innerHTML = `
+    <div class="section-title">
+      <h2>Vendas registradas (${vendas.length})</h2>
+      <button type="button" class="link-btn" id="btnExportar">Exportar CSV</button>
+    </div>
+    <div class="toolbar">
+      <input type="text" id="inpBusca" placeholder="Buscar por comprador, produto ou equipe…" value="${esc(vendasFiltro.busca)}">
+      <select id="selStatusFiltro">
+        <option value="todas" ${vendasFiltro.status==='todas'?'selected':''}>Todas</option>
+        <option value="pago" ${vendasFiltro.status==='pago'?'selected':''}>Pagas</option>
+        <option value="deve" ${vendasFiltro.status==='deve'?'selected':''}>A receber</option>
+      </select>
+    </div>
+    <div class="mini-list" id="listaVendas">
+      ${lista.length ? lista.map(v => vendaRowFull(v)).join('') : `<div class="empty"><span class="glyph">🧾</span>Nenhuma venda encontrada.</div>`}
+    </div>
+  `;
+
+  document.getElementById('inpBusca').addEventListener('input', (e) => { vendasFiltro.busca = e.target.value; renderVendas(); document.getElementById('inpBusca').focus(); document.getElementById('inpBusca').selectionStart = document.getElementById('inpBusca').value.length; });
+  document.getElementById('selStatusFiltro').addEventListener('change', (e) => { vendasFiltro.status = e.target.value; renderVendas(); });
+  document.getElementById('btnExportar').addEventListener('click', exportarCSV);
+
+  document.getElementById('listaVendas').addEventListener('click', async (e) => {
+    const id = e.target.closest('[data-id]')?.dataset.id;
+    if(!id) return;
+    if(e.target.closest('.stamp')){
+      const v = vendas.find(x => x.id === id);
+      if(!v) return;
+      if(v.pago){
+        await updateVenda(id, { pago: false, formaPagamento: null });
+      } else {
+        await updateVenda(id, { pago: true, formaPagamento: v.formaPagamento || 'Outro' });
+      }
+      renderChip(); renderVendas();
+    } else if(e.target.closest('.icon-btn')){
+      const v = vendas.find(x => x.id === id);
+      if(!v) return;
+      if(confirm(`Excluir a venda de "${v.produto}" para ${v.comprador}?`)){
+        await removeVenda(id);
+        renderChip(); renderVendas();
+      }
+    }
+  });
+}
+
+function vendaRowFull(v){
+  return `
+    <div class="sale-row" data-id="${v.id}">
+      <div class="info">
+        <div class="prod">${esc(v.produto)} × ${v.quantidade}</div>
+        <div class="meta">${fmtDateTime(v.ts)} · ${esc(v.comprador)}${v.equipe ? ' · ' + esc(v.equipe) : ''}${v.formaPagamento ? ' · ' + esc(v.formaPagamento) : ''}</div>
+      </div>
+      <div class="actions">
+        <div class="amt">${fmtMoney(v.valorTotal)}</div>
+        <span class="stamp btnlike ${v.pago ? 'pago' : 'deve'}" title="Clique para alternar">${v.pago ? 'Pago' : 'Deve'}</span>
+        <button type="button" class="icon-btn" title="Excluir">✕</button>
+      </div>
+    </div>
+  `;
+}
+
+function exportarCSV(){
+  const header = ['Data/Hora','Produto','Categoria','Quantidade','Preço unit.','Valor total','Comprador','Equipe','Pago','Forma de pagamento','Observações'];
+  const rows = getVendasOrdenadas().map(v => [
+    new Date(v.ts).toLocaleString('pt-BR'), v.produto, v.categoria, v.quantidade,
+    v.precoUnit.toFixed(2).replace('.',','), v.valorTotal.toFixed(2).replace('.',','),
+    v.comprador, v.equipe || '', v.pago ? 'PAGO' : 'NÃO PAGO', v.formaPagamento || '', v.obs || ''
+  ]);
+  const csv = [header, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(';')).join('\r\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'vendas-mini-bazar-retiro.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ---------- Aba: Devedores ---------- */
+function renderDevedores(){
+  const el = document.getElementById('view-devedores');
+  const devedores = getDevedores();
+  const totalGeral = devedores.reduce((s,d) => s + d.total, 0);
+
+  el.innerHTML = `
+    <div class="section-title">
+      <h2>Devedores</h2>
+      <span class="stamp deve">${fmtMoney(totalGeral)}</span>
+    </div>
+    ${devedores.length ? devedores.map(d => devedorCardHtml(d)).join('') : `<div class="empty"><span class="glyph">✅</span>Ninguém está devendo no momento.</div>`}
+  `;
+}
+// O container da aba nunca é recriado (só o conteúdo dentro dele), então este
+// listener é anexado UMA ÚNICA VEZ (chamado a partir de init) — anexá-lo dentro
+// de renderDevedores() faria ele se acumular a cada clique.
+function bindDevedoresOnce(){
+  document.getElementById('view-devedores').addEventListener('click', handleDevedoresClick);
+}
+
+function devedorKey(nome){ return nome.trim().toLowerCase(); }
+
+function devedorCardHtml(d){
+  const key = devedorKey(d.nome);
+  const aberto = devedorAberto === key;
+  const quitando = quitarAberto === key;
+  return `
+    <div class="devedor-card" data-key="${esc(key)}" data-nome="${esc(d.nome)}">
+      <div class="devedor-top" data-action="toggle">
+        <div>
+          <div class="devedor-name">${esc(d.nome)}</div>
+          ${d.equipe ? `<div class="devedor-equipe">${esc(d.equipe)}</div>` : ''}
+        </div>
+        <div class="devedor-total">${fmtMoney(d.total)}</div>
+      </div>
+      <div class="devedor-detail ${aberto ? 'open' : ''}">
+        ${d.itens.map(i => `
+          <div class="devedor-item">
+            <span>${esc(i.produto)} × ${i.quantidade}</span>
+            <span>${fmtMoney(i.valorTotal)}</span>
+          </div>
+        `).join('')}
+        ${quitando ? `
+          <div class="quitar-row">
+            <select data-role="formaQuitar">
+              ${FORMAS_PAGAMENTO.map(f => `<option value="${f}">${f}</option>`).join('')}
+            </select>
+            <button type="button" class="btn-quitar" data-action="confirmarQuitar">Confirmar</button>
+          </div>
+        ` : `
+          <button type="button" class="btn-ghost small" style="margin-top:10px; width:100%;" data-action="quitar">Quitar dívida</button>
+        `}
+      </div>
+    </div>
+  `;
+}
+
+function handleDevedoresClick(e){
+  const card = e.target.closest('.devedor-card');
+  if(!card) return;
+  const key = card.dataset.key;
+  const nome = card.dataset.nome;
+  const action = e.target.closest('[data-action]')?.dataset.action;
+
+  if(action === 'toggle'){
+    devedorAberto = devedorAberto === key ? null : key;
+    if(devedorAberto !== key) quitarAberto = null;
+    renderDevedores();
+  } else if(action === 'quitar'){
+    quitarAberto = key; devedorAberto = key;
+    renderDevedores();
+  } else if(action === 'confirmarQuitar'){
+    const forma = card.querySelector('[data-role=formaQuitar]').value;
+    quitarDivida(nome, forma);
+  }
+}
+
+async function quitarDivida(nome, forma){
+  const key = devedorKey(nome);
+  const alvos = vendas.filter(v => !v.pago && devedorKey(v.comprador) === key);
+  if(!alvos.length) return;
+  alvos.forEach(v => { v.pago = true; v.formaPagamento = forma; });
+  quitarAberto = null; devedorAberto = null;
+  toast(`Dívida de ${nome} quitada!`, 'success');
+  renderChip();
+  renderDevedores();
+  await saveKey('vendas', vendas);
+}
+
+/* ---------- Aba: Resumo ---------- */
+function renderResumo(){
+  const el = document.getElementById('view-resumo');
+  const r = getResumo();
+  const maiorForma = Math.max(1, ...Object.values(r.porForma));
+  const maiorProduto = Math.max(1, ...r.topProdutos.map(p => p[1]));
+  const maiorCategoria = Math.max(1, ...r.categorias.map(c => c[1]));
+
+  el.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card"><div class="v">${fmtMoney(r.arrecadado)}</div><div class="l">Arrecadado</div></div>
+      <div class="stat-card"><div class="v">${fmtMoney(r.pendente)}</div><div class="l">A receber</div></div>
+      <div class="stat-card"><div class="v">${r.unidades}</div><div class="l">Unidades vendidas</div></div>
+      <div class="stat-card"><div class="v">${fmtMoney(r.ticketMedio)}</div><div class="l">Ticket médio</div></div>
+    </div>
+
+    <div class="card">
+      <h2 style="font-size:14.5px;">Arrecadado por forma de pagamento</h2>
+      <div style="margin-top:12px;">
+        ${FORMAS_PAGAMENTO.map(f => `
+          <div class="bar-row">
+            <div class="name">${f}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${(r.porForma[f]/maiorForma*100).toFixed(1)}%;"></div></div>
+            <div class="val">${fmtMoney(r.porForma[f])}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="font-size:14.5px;">Produtos mais vendidos</h2>
+      <div style="margin-top:12px;">
+        ${r.topProdutos.length ? r.topProdutos.map(([nome, qtd]) => `
+          <div class="bar-row">
+            <div class="name" style="flex-basis:150px;">${esc(nome)}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${(qtd/maiorProduto*100).toFixed(1)}%;"></div></div>
+            <div class="val">${qtd} un.</div>
+          </div>
+        `).join('') : '<div class="empty">Ainda sem vendas.</div>'}
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="font-size:14.5px;">Vendido por categoria</h2>
+      <div style="margin-top:12px;">
+        ${r.categorias.length ? r.categorias.map(([cat, val]) => `
+          <div class="bar-row">
+            <div class="name">${esc(cat)}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${(val/maiorCategoria*100).toFixed(1)}%;"></div></div>
+            <div class="val">${fmtMoney(val)}</div>
+          </div>
+        `).join('') : '<div class="empty">Ainda sem vendas.</div>'}
+      </div>
+    </div>
+  `;
+}
+
+/* ---------- Aba: Catálogo ---------- */
+function renderCatalogo(){
+  const el = document.getElementById('view-catalogo');
+  const grupos = catalogoAgrupado();
+
+  el.innerHTML = `
+    <div class="card">
+      <h2 style="font-size:14.5px;">Adicionar produto</h2>
+      <p class="sub">Algo que apareceu e ainda não está na lista? Cadastre aqui.</p>
+      <form id="formNovoProduto">
+        <div class="row">
+          <div class="field" style="flex:1.3;">
+            <label for="npNome">Nome</label>
+            <input type="text" id="npNome" required placeholder="Ex.: Camiseta P">
+          </div>
+          <div class="field" style="flex:0 0 100px;">
+            <label for="npPreco">Preço (R$)</label>
+            <input type="number" id="npPreco" step="0.01" min="0" required placeholder="0,00">
+          </div>
+        </div>
+        <div class="field">
+          <label for="npCategoria">Categoria</label>
+          <input type="text" id="npCategoria" list="listaCategorias" required placeholder="Ex.: Acessórios">
+          <datalist id="listaCategorias">${Array.from(new Set(catalogo.map(p=>p.categoria))).map(c => `<option value="${esc(c)}">`).join('')}</datalist>
+        </div>
+        <button type="submit" class="btn-ghost" style="width:100%; padding:11px;">+ Adicionar ao catálogo</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2 style="font-size:14.5px;">Catálogo (${catalogo.length} itens)</h2>
+      ${grupos.map(g => `
+        <div class="cat-group">
+          <h3>${esc(g.categoria)}</h3>
+          ${g.itens.map(p => `
+            <div class="cat-item" data-id="${p.id}">
+              <div class="nome">${esc(p.nome)}</div>
+              <input type="number" step="0.01" min="0" value="${p.preco.toFixed(2)}" data-role="preco">
+              <button type="button" class="icon-btn" title="Remover">✕</button>
+            </div>
+          `).join('')}
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="card">
+      <h2 style="font-size:14.5px;">Diagnóstico do armazenamento</h2>
+      <p class="sub">Se as vendas não estiverem sendo salvas, use isso para ver o que está acontecendo.</p>
+      <div style="font-size:13px; line-height:2;">
+        <div>Armazenamento disponível: <strong>${hasStorage() ? 'Sim' : 'Não'}</strong></div>
+        <div>Pendências não sincronizadas: <strong>${dirtyKeys.size === 0 ? 'nenhuma' : Array.from(dirtyKeys).join(', ')}</strong></div>
+      </div>
+      <button type="button" class="btn-ghost" id="btnTestarConexao" style="width:100%; padding:11px; margin-top:10px;">Testar conexão agora</button>
+      <p id="diagResultado" style="font-size:12.5px; margin-top:8px; min-height:16px;"></p>
+    </div>
+  `;
+
+  document.getElementById('formNovoProduto').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const nome = document.getElementById('npNome').value.trim();
+    const preco = parseFloat(document.getElementById('npPreco').value);
+    const categoria = document.getElementById('npCategoria').value.trim() || 'Outros';
+    if(!nome || isNaN(preco)){ toast('Preencha nome e preço.', 'error'); return; }
+    const novo = { id: uid(), nome, categoria, preco };
+    catalogo.push(novo);
+    toast('Produto adicionado!', 'success');
+    renderCatalogo();
+    await saveKey('catalogo', catalogo);
+  });
+
+  el.querySelectorAll('.cat-item input[data-role=preco]').forEach(inp => {
+    inp.addEventListener('change', async () => {
+      const id = inp.closest('.cat-item').dataset.id;
+      const item = catalogo.find(p => p.id === id);
+      if(!item) return;
+      const novoPreco = parseFloat(inp.value);
+      if(isNaN(novoPreco) || novoPreco < 0){ inp.value = item.preco.toFixed(2); return; }
+      item.preco = novoPreco;
+      toast('Preço atualizado.', 'success');
+      await saveKey('catalogo', catalogo);
+    });
+  });
+
+  el.querySelectorAll('.cat-item .icon-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const wrap = btn.closest('.cat-item');
+      const id = wrap.dataset.id;
+      const item = catalogo.find(p => p.id === id);
+      if(!item) return;
+      if(!confirm(`Remover "${item.nome}" do catálogo?`)) return;
+      const idx = catalogo.findIndex(p => p.id === id);
+      catalogo.splice(idx, 1);
+      toast('Produto removido.', 'success');
+      renderCatalogo();
+      await saveKey('catalogo', catalogo);
+    });
+  });
+
+  document.getElementById('btnTestarConexao').addEventListener('click', testarConexao);
+}
+
+// Faz uma gravação + leitura de teste (chave descartável) e mostra o
+// resultado na tela, para diagnosticar problemas de sincronização sem
+// depender só do console do navegador.
+async function testarConexao(){
+  const out = document.getElementById('diagResultado');
+  if(!out) return;
+  out.style.color = 'var(--ink-soft)';
+  out.textContent = 'Testando conexão com o armazenamento…';
+
+  if(!hasStorage()){
+    out.style.color = 'var(--rust)';
+    out.textContent = 'Este visualizador não tem acesso ao sistema de armazenamento do Claude (window.storage não existe aqui). As vendas ficam só nesta aba.';
+    return;
+  }
+
+  const chaveTeste = '__diagnostico__';
+  const valorTeste = { ping: Date.now() };
+  const t0 = Date.now();
+  const gravou = await saveKeyOnce(chaveTeste, valorTeste);
+  if(!gravou){
+    out.style.color = 'var(--rust)';
+    out.textContent = 'Falha ao gravar o teste. O armazenamento respondeu com erro — veja o console do navegador para a mensagem exata.';
+    return;
+  }
+  try{
+    const r = await withTimeout(window.storage.get(chaveTeste, true), 6000);
+    const val = JSON.parse(r.value);
+    const ms = Date.now() - t0;
+    if(val && val.ping === valorTeste.ping){
+      out.style.color = 'var(--green)';
+      out.textContent = `OK — gravação e leitura confirmadas em ${ms}ms, às ${new Date().toLocaleTimeString('pt-BR')}.`;
+    } else {
+      out.style.color = 'var(--rust)';
+      out.textContent = 'Gravou, mas a leitura de volta veio diferente do esperado.';
+    }
+  }catch(e){
+    out.style.color = 'var(--rust)';
+    out.textContent = 'Gravou, mas falhou ao ler de volta: ' + (e && e.message ? e.message : String(e));
+  }
+}
+
+/* ---------- Start ---------- */
+init();
+
+})();
+</script>
+</body>
+</html>
